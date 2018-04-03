@@ -1,0 +1,90 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[round]{natbib}
+\usepackage[margin=0.8in]{geometry}
+\bibliographystyle{plainnat}
+\usepackage{hyperref}
+
+\newcommand{\ar}{\(\Rightarrow\)}
+
+\title{\rule{\linewidth}{2pt}\\\vspace{2mm}
+Project Proposal : CS3543 - Computer Networks 2\\
+\textbf{Mini-Nmap}\\
+\rule{\linewidth}{2pt}}
+\author{Harsh Agarwal\\\texttt{cs15btech11019}
+\and
+S. Vishwak\\\texttt{cs15btech11043}}
+\date{}
+
+\begin{document}
+\maketitle
+\nocite{*}
+
+\section{Objective of the project}
+\begin{flushleft}
+The objective of this project is to implement a native version of Nmap - focusing more on various kinds of host discovery and port-scanning algorithms.
+\end{flushleft}
+
+\section{Description of the project}
+\subsection{Host Discovery}
+\begin{flushleft}
+One of the very first steps in any network reconnaissance mission is to reduce a set of IP ranges into a list of active or interesting hosts. Scanning every port of every single IP address is slow and usually unnecessary. The idea in host discovery is to send \emph{concurrent} \texttt{ICMP} messages to all the hosts in a network, and continue to do so until we have found a list of active IPs in the subnet. Host discovery is sometimes called ping scan. \texttt{Nmap} provides a lot more features to host discovery - which will take a lot of time to implement in entirety, and hence we are focusing on \texttt{ICMP} based host-discovery with certain options obtained by configuring the \texttt{ICMP} packet.
+\end{flushleft}
+
+\subsection{Port Scanning}
+\begin{flushleft}
+A very popular method to perform port scanning is using the \texttt{TCP} \texttt{SYN} field, and is also called the \texttt{TCP SYN} scan. Here the host which is scanning (the scanner) sends a \texttt{TCP} packet with the \texttt{SYN} bit set and waits for either one of a \texttt{SYN/ACK} or a \texttt{RST} to detect open ports. We will be implementing this method along with other variants which are briefly described below:
+\begin{itemize}
+\item \texttt{FIN} scan \ar Send \texttt{TCP} packet with \texttt{FIN} bit set and wait for FIN or RST response to detect open ports.
+\item \texttt{Xmas} scan \ar Send \texttt{TCP} packet with \texttt{FIN}, \texttt{URG}, \texttt{PUSH} bit set and wait for \texttt{FIN} or \texttt{RST} response to detect open ports.
+\item \texttt{Null} scan \ar Send \texttt{TCP} packet with no special / flag bits being set and wait for \texttt{FIN} or \texttt{RST} response to detect open ports.
+\end{itemize}
+
+There are also some indirect scanning techniques. The idea is to use the (spoofed) \texttt{IP} address of a third host to disguise the real  scanning system. Since the scanned host will react by sending or not certain segments to the spoofed host, all that is needed is to monitor the \texttt{IP} activity of the spoofed host to know the results of the original scan. Our implementation will include three methods in indirect scanning:
+\begin{itemize}
+\item Dumb Scan \ar Use a victim computer to scan target computer ports.
+\item Decoy Scan \ar Send many packets with spoofed \texttt{IP} addresses and 1 genuine address. This makes it hard to pin-point the ``attacker'' IP.
+\item \texttt{identd} Scan \ar By exploiting the Identification Protocol, retrieve the username (Userid) that owns the daemon running on a specified port.
+\end{itemize}
+
+We also plan on implementing an \texttt{ARP} poisoning technique. This tool is divided into 3 parts.
+\begin{itemize}
+\item The \texttt{ARP} Poisoner module responds back to every \texttt{ARP} request made by the target with scanner's own \texttt{MAC} address.
+\item The Packet Sender sends \texttt{UDP} packets with source port as the port being scanned.
+\item The Sniffer captures all the \texttt{UDP} and \texttt{ICMP} packets coming to the scanner and predicts whether port is open or closed.
+\end{itemize}
+\end{flushleft}
+
+\section{Contributions from members}
+\begin{flushleft}
+\begin{itemize}
+\item Harsh: \texttt{TCP SYN} scan, \texttt{Xmas} scan, \texttt{Dumb} scan, \texttt{ARP} Poisoner and Sniffer, \texttt{identd} Scan.
+\item Vishwak: Host Discovery techniques using \texttt{ICMP}, \texttt{FIN} scan, \texttt{Decoy} scan and \texttt{ARP} packet sender.
+\end{itemize}
+\(\newline\)
+
+Please note that this list is temporary and could evolve during the course of the project. Since we are using GitHub as a VCS, evaluators will be able to note contributions from there.
+\end{flushleft}
+
+\section{Technologies that will used and deliverables}
+\subsubsection*{Technologies}
+\begin{flushleft}
+For testing purposes, we will create a private subnet on an \texttt{OpenStack} setup and spawn many \texttt{VM}s on this subnet. We will open multiple ports on all \texttt{VM}s and test our tool on them. For version control, we will be using GitHub, and \texttt{WireShark} and/or \texttt{tcpdump} for capturing packet traffic and behaviourial aspects. We hope to also use \texttt{Prometheus} as a monitoring system. For coding, we will preferably stick the Linux network API in C / C++ and occasionally use Python as well. Paper references are specified in the end of this document.
+\end{flushleft}
+
+\subsubsection*{Deliverables}
+\begin{flushleft}
+At the end of the project, we will submit the source code. Using \texttt{WireShark} and/or \texttt{tcpdump}, submit flow graphs of conversation taking place between scanner and victim. \texttt{Prometheus} will be able to provide information regarding traffic ingress and egress on the victim. We will also provide a small report discussing about the accuracy of various port scanning techniques, since modern OSes have checks to prevent canonnical port-scanning techniques.
+\end{flushleft}
+
+\section{Scope for Improvement and future work}
+\begin{flushleft}
+All the above listed items will be implemented definitely as a part of the project. In addition - provided time permits, we hope to implement a few ideas specified below:
+\begin{itemize}
+\item Port Scanning Detection techniques \ar how to find out if an open port is being scanned?
+\item Stack Fingerprinting and OS Detection \ar detecting operating systems using the format of the reply obtained from the client. This is possible due to certain (un)specifications in the RFCs.
+\end{itemize}
+\end{flushleft}
+
+\bibliography{main.bib}
+\end{document}

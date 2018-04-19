@@ -100,3 +100,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# sublime text ECC file
+.clang_complete

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <net/if.h>
+#include <ifaddrs.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -21,18 +22,17 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/in_systm.h>
 
-using namespace std;
-
 class Ping {
-	Logger log;
-	struct timeval timeout_tv;
+    Logger log;
+    struct timeval timeout_tv;
+    unsigned short calcsum(unsigned short* buffer, int length);
 public:
-	static int timeout; 	//in microseconds
-	Ping();
-	int open_icmp_socket();
-	void set_src_addr(int sockfd, const string &IP);
-	// int ping_request(int sockfd, struct sockaddr* saddr, socklen_t saddr_len, uint16_t icmp_seq_nr, uint16_t icmp_id_nr);
-	// unsigned short calcsum(unsigned short* buffer, int length);
+    static int timeout;     //in microseconds
+    Ping();
+    int open_icmp_socket();
+    std::string get_my_IP_address(const std::string &interface);
+    void set_src_addr(int sockfd, const std::string &IP);
+    void ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr);
 };
 
 #endif // PING_H

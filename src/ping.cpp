@@ -24,13 +24,13 @@ int Ping::open_icmp_socket() {
     if (sockfd < 0) {
         sockfd = socket(AF_INET, SOCK_DGRAM, proto->p_proto);
         if (sockfd < 0) {
-            log.warn("Ping::open_ping_socket => Error in creating ICMP socket");
+            log.error("Ping::open_ping_socket => Error in creating ICMP socket -- " + Error::ErrStr());
             throw Error::SOCKET_NOT_CREATED;
         }
     }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout_tv, sizeof(timeout_tv)) < 0) {
-        log.warn("Ping::open_ping_socket => Error in creating timeout for socket connection");
+        log.error("Ping::open_ping_socket => Error in creating timeout for socket connection -- " + Error::ErrStr());
         throw Error::TIMEOUT_NOT_CREATED;
     }
 
@@ -38,64 +38,103 @@ int Ping::open_icmp_socket() {
     int flags;
 
     if ((flags = fcntl(sockfd, F_GETFL, 0)) < 0) {
-        log.error("Ping::open_ping_socket => Error in making non-blocking IO");
+        log.warn("Ping::open_ping_socket => Error in making non-blocking IO -- " + Error::ErrStr());
         throw Error::NONBLOCKING_IO_NOT_CREATED;
     }
 
     if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-        log.error("Ping::open_ping_socket => Error in making non-blocking IO");
+        log.warn("Ping::open_ping_socket => Error in making non-blocking IO -- " + Error::ErrStr());
         throw Error::NONBLOCKING_IO_NOT_CREATED;
     }
     return sockfd;
 }
 
-void Ping::set_src_addr(int sockfd, const string &IP)
-{
-	struct sockaddr_in addr;
+std::string Ping::get_my_IP_address(const std::string &interface = "enp7s0") {
+    struct ifaddrs * ifAddrStruct = NULL;
+    struct ifaddrs * ifa = NULL;
+    void * tmpAddrPtr = NULL;
+    std::string tmpInterface;
+    getifaddrs(&ifAddrStruct);
+
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr) {
+            continue;
+        }
+        tmpInterface = std::string(ifa->ifa_name);
+        if (interface.compare(tmpInterface) == 0) {
+            if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4 ,a valid IP4 Address
+                tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+                char addressBuffer[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+                log.info("Ping::get_my_IP_address => My IP address is " + std::string(addressBuffer));
+                return std::string(addressBuffer);
+            }
+        }
+    }
+
+    log.error("Ping::set_src_addr => Source IP not found of interface " + interface);
+    throw Error::HOST_IP_MISSING;
+}
+
+void Ping::set_src_addr(int sockfd, const std::string &IP) {
+    if (IP.empty()) {
+        log.error("Ping::set_src_addr => Source IP not inputted");
+        throw Error::INPUT_PARAMETER_MISSING;
+    }
+
+    struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(IP.c_str());
 	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log.warn("Ping::socket_set_src_addr_ipv4 => Error in binding ICMP socket");
+		log.error("Ping::set_src_addr => Error in binding ICMP socket to source");
 		throw Error::SOCKET_NOT_BOUND;
 	}
 }
 
-// unsigned short Ping::calcsum(unsigned short* buffer, int length)
-// {
-//     unsigned long sum;
+unsigned short Ping::calcsum(unsigned short* buffer, int length) {
+    unsigned long sum;
 
-//     /* initialize sum to zero and loop until length (in words) is 0 */
-//     for (sum = 0; length > 1; length -= 2) {/* sizeof() returns number of bytes, we're interested in number of words */
-//         sum += *buffer++; /* add 1 word of buffer to sum and proceed to the next */
-// 	}
+    /* initialize sum to zero and loop until length (in words) is 0 */
+    for (sum = 0; length > 1; length -= 2) {/* sizeof() returns number of bytes, we're interested in number of words */
+        sum += *buffer++; /* add 1 word of buffer to sum and proceed to the next */
+	}
 
-//     /* we may have an extra byte */
-//     if (length == 1) {
-//         sum += (char)*buffer;
-//     }
+    /* we may have an extra byte */
+    if (length == 1) {
+        sum += (char)*buffer;
+    }
 
-//     sum = (sum >> 16) + (sum & 0xFFFF); /* add high 16 to low 16 */
-//     sum += (sum >> 16); /* add carry */
-//     return ~sum;
-// }
+    sum = (sum >> 16) + (sum & 0xFFFF); /* add high 16 to low 16 */
+    sum += (sum >> 16); /* add carry */
+    return ~sum;
+}
 
-// int Ping::ping_request(int sockfd, struct sockaddr* saddr, socklen_t saddr_len, uint16_t icmp_seq_nr, uint16_t icmp_id_nr)
-// {
-//     struct icmp* icp;
-//     int n;
+void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr)
+{
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(destinationIP.c_str());
 
-//     icp = (struct icmp*)ping_buffer_ipv4;
+    if (addr.sin_addr.s_addr == INADDR_NONE) {
+        log.error("Ping::ping_request => echo ping an invalid IP address");
+        throw Error::INVALID_IP;
+    }
 
-//     icp->icmp_type = ICMP_ECHO;
-//     icp->icmp_code = 0;
-//     icp->icmp_cksum = 0;
-//     icp->icmp_seq = htons(icmp_seq_nr);
-//     icp->icmp_id = htons(icmp_id_nr);
+    struct icmp* icp = new (struct icmp);
 
-//     icp->icmp_cksum = calcsum((unsigned short*)icp, ping_pkt_size_ipv4);
+    icp->icmp_type = ICMP_ECHO;
+    icp->icmp_code = 0;
+    icp->icmp_cksum = 0;
+    icp->icmp_seq = htons(icmp_seq_nr);
+    icp->icmp_id = htons(getpid() & 0xFFFF);
 
-//     n = sendto(s, icp, ping_pkt_size_ipv4, 0, saddr, saddr_len);
+    icp->icmp_cksum = calcsum((unsigned short*)icp, sizeof(struct icmp));
+    log.debug("Ping::ping_request => Got checksum as " + std::to_string(icp->icmp_cksum));
 
-//     return n;
-// }
+    if (sendto(sockfd, icp, sizeof(*icp), 0, (struct sockaddr*)(&addr), sizeof(struct sockaddr)) < 0) {
+        log.error("Ping::ping_request => unable to send ICMP echo -- " + Error::ErrStr());
+        throw Error::UNABLE_TO_SEND;
+    }
+}

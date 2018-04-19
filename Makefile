@@ -22,6 +22,7 @@ OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
 DEPS := $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS)))
 
 # compilers (at least gcc and clang) don't create the subdirectories automatically
+$(shell mkdir -p bin >/dev/null)
 $(shell mkdir -p $(dir $(OBJS)) >/dev/null)
 $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 
@@ -63,7 +64,7 @@ dist: $(DISTFILES)
 
 .PHONY: clean
 clean:
-	$(RM) -r $(OBJDIR) $(DEPDIR)
+	$(RM) -r $(OBJDIR) $(DEPDIR) $(BIN)
 
 .PHONY: help
 help:

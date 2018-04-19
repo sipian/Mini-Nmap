@@ -16,7 +16,9 @@ public:
 			HOST_IP_MISSING,
 			INPUT_PARAMETER_MISSING,
 			INVALID_IP,
-			UNABLE_TO_SEND
+			UNABLE_TO_SEND_ICMP,
+			UNABLE_TO_RECEIVE_ICMP,
+			INVALID_CHECKSUM
 	};
 	static std::string ErrStr() {
 	   	char* e = std::strerror(errno);

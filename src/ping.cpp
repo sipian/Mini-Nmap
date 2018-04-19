@@ -49,7 +49,7 @@ int Ping::open_icmp_socket() {
     return sockfd;
 }
 
-std::string Ping::get_my_IP_address(const std::string &interface = "enp7s0") {
+std::string Ping::get_my_IP_address(const std::string &interface) {
     struct ifaddrs * ifAddrStruct = NULL;
     struct ifaddrs * ifa = NULL;
     void * tmpAddrPtr = NULL;
@@ -118,7 +118,7 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
     addr.sin_addr.s_addr = inet_addr(destinationIP.c_str());
 
     if (addr.sin_addr.s_addr == INADDR_NONE) {
-        log.error("Ping::ping_request => echo ping an invalid IP address");
+        log.error("Ping::ping_request => echo ping to an invalid IP address -- " + destinationIP);
         throw Error::INVALID_IP;
     }
 
@@ -131,10 +131,26 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
     icp->icmp_id = htons(getpid() & 0xFFFF);
 
     icp->icmp_cksum = calcsum((unsigned short*)icp, sizeof(struct icmp));
-    log.debug("Ping::ping_request => Got checksum as " + std::to_string(icp->icmp_cksum));
 
-    if (sendto(sockfd, icp, sizeof(*icp), 0, (struct sockaddr*)(&addr), sizeof(struct sockaddr)) < 0) {
+    if (sendto(sockfd, icp, sizeof(struct icmp), 0, (struct sockaddr*)(&addr), sizeof(struct sockaddr)) < 0) {
         log.error("Ping::ping_request => unable to send ICMP echo -- " + Error::ErrStr());
-        throw Error::UNABLE_TO_SEND;
+        throw Error::UNABLE_TO_SEND_ICMP;
     }
+    log.debug("Ping::ping_request => Sent ping echo to " + destinationIP);
+}
+
+void Ping::ping_reply(int sockfd) {
+    struct icmp* icp = new (struct icmp);
+    struct sockaddr senderAddr;
+    socklen_t senderLen = sizeof(senderAddr);
+
+    if (recvfrom(sockfd, icp, sizeof(struct icmp), 0, &senderAddr, &senderLen) < 0) {
+        log.error("Ping::ping_reply => unable to receive ICMP reply -- " + Error::ErrStr());
+        throw Error::UNABLE_TO_RECEIVE_ICMP;
+    }
+
+    char addressBuffer[INET_ADDRSTRLEN];
+    void *tmpAddrPtr = &(((struct sockaddr_in*)(&senderAddr))->sin_addr);
+    inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+    log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer));
 }

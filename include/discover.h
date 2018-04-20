@@ -28,7 +28,6 @@ public:
 	std::tuple<std::string, int> split_CIDR(const std::string &IP);
 	std::queue <request*> handle_CIDR(std::string IP, int netmask);
 	std::vector<std::string> discover_host(std::queue <Discover::request*> &roundRobin);
-
 };
 
 #endif // DISCOVER_H

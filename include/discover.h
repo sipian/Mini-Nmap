@@ -5,12 +5,8 @@
 #include "error.h"
 #include "logger.h"
 #include <regex>
-#include <math.h>
 #include <queue>
-#include <string.h>
-
-#include "error.h"
-#include "logger.h"
+#include <math.h>
 #include <vector>
 
 class Discover {
@@ -31,7 +27,7 @@ public:
 	bool is_valid_CIDR(const std::string &IP);
 	std::tuple<std::string, int> split_CIDR(const std::string &IP);
 	std::queue <request*> handle_CIDR(std::string IP, int netmask);
-	const std::vector<std::string> discover_host(std::queue <Discover::request*> &roundRobin);
+	std::vector<std::string> discover_host(std::queue <Discover::request*> &roundRobin);
 
 };
 

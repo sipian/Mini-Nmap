@@ -1,7 +1,5 @@
-#include <iostream>
-#include <queue>
-#include "discover.h"
 #include "logger.h"
+#include "discover.h"
 
 int main() {
 	Ping::timeout = 5e5;

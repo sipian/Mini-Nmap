@@ -5,22 +5,10 @@
 #include "logger.h"
 #include <fcntl.h>
 #include <netdb.h>
-#include <stdio.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-#include <iostream>
 #include <unistd.h>
-#include <net/if.h>
 #include <ifaddrs.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/in_systm.h>
 
 class Ping {
     Logger log;

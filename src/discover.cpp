@@ -57,7 +57,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	return roundRobin;
 }
 
-const std::vector<std::string> Discover::discover_host(std::queue <Discover::request*> &roundRobin) {
+std::vector<std::string> Discover::discover_host(std::queue <Discover::request*> &roundRobin) {
 	int sockfd = ping.open_icmp_socket();
 	std::vector<std::string> active_IPs;
 	ping.set_src_addr(sockfd, ping.get_my_IP_address("enp7s0"));

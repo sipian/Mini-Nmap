@@ -110,8 +110,7 @@ unsigned short Ping::calcsum(unsigned short* buffer, int length) {
     return ~sum;
 }
 
-void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr)
-{
+void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr) {
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -134,12 +133,14 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
 
     if (sendto(sockfd, icp, sizeof(struct icmp), 0, (struct sockaddr*)(&addr), sizeof(struct sockaddr)) < 0) {
         log.error("Ping::ping_request => unable to send ICMP echo -- " + Error::ErrStr());
+        delete icp;
         throw Error::UNABLE_TO_SEND_ICMP;
     }
     log.debug("Ping::ping_request => Sent ping echo to " + destinationIP);
+    delete icp;
 }
 
-void Ping::ping_reply(int sockfd) {
+struct icmp* Ping::ping_reply(int sockfd) {
     struct icmp* icp = new (struct icmp);
     struct sockaddr senderAddr;
     socklen_t senderLen = sizeof(senderAddr);
@@ -153,4 +154,5 @@ void Ping::ping_reply(int sockfd) {
     void *tmpAddrPtr = &(((struct sockaddr_in*)(&senderAddr))->sin_addr);
     inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
     log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer));
+    return icp;
 }

@@ -18,7 +18,8 @@ public:
 			INVALID_IP,
 			UNABLE_TO_SEND_ICMP,
 			UNABLE_TO_RECEIVE_ICMP,
-			INVALID_CHECKSUM
+			INVALID_CHECKSUM,
+			NO_ACTIVE_IP
 	};
 	static std::string ErrStr() {
 	   	char* e = std::strerror(errno);

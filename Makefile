@@ -40,7 +40,7 @@ CFLAGS := -std=c++14
 # C++ flags
 CXXFLAGS := -std=c++14
 # C/C++ flags
-CPPFLAGS := -O3 -Wall -Wextra -pedantic -I include
+CPPFLAGS := -O3 -Wall -Wextra -I include
 # linker flags
 LDFLAGS :=
 # flags required for dependency generation; passed to compilers

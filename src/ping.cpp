@@ -29,23 +29,12 @@ int Ping::open_icmp_socket() {
         }
     }
 
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout_tv, sizeof(timeout_tv)) < 0) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)(&timeout_tv), sizeof(timeout_tv)) < 0) {
         log.error("Ping::open_ping_socket => Error in creating timeout for socket connection -- " + Error::ErrStr());
         throw Error::TIMEOUT_NOT_CREATED;
     }
+    log.debug("Ping::open_ping_socket => set socket's receive timeout successfully");
 
-    /* Make sure that we use non-blocking IO */
-    int flags;
-
-    if ((flags = fcntl(sockfd, F_GETFL, 0)) < 0) {
-        log.warn("Ping::open_ping_socket => Error in making non-blocking IO -- " + Error::ErrStr());
-        throw Error::NONBLOCKING_IO_NOT_CREATED;
-    }
-
-    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-        log.warn("Ping::open_ping_socket => Error in making non-blocking IO -- " + Error::ErrStr());
-        throw Error::NONBLOCKING_IO_NOT_CREATED;
-    }
     return sockfd;
 }
 
@@ -140,7 +129,7 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
     delete icp;
 }
 
-struct icmp* Ping::ping_reply(int sockfd) {
+std::string Ping::ping_reply(int sockfd) {
     struct icmp* icp = new (struct icmp);
     struct sockaddr senderAddr;
     socklen_t senderLen = sizeof(senderAddr);
@@ -154,5 +143,5 @@ struct icmp* Ping::ping_reply(int sockfd) {
     void *tmpAddrPtr = &(((struct sockaddr_in*)(&senderAddr))->sin_addr);
     inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
     log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer) + " seq no #" + std::to_string(ntohs(icp->icmp_seq)));
-    return icp;
+    return std::string(addressBuffer);
 }

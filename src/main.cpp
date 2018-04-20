@@ -2,7 +2,7 @@
 #include "discover.h"
 
 int main() {
-	Ping::timeout = 5e5;
+	Ping::timeout = 1e4;
 	Logger::logLevel = Logger::DEBUG;
 	/* test ping  */
 

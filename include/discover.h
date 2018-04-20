@@ -21,7 +21,7 @@ public:
 	typedef struct request {
 		std::string IP;
 		int trial;
-		uint16_t expectedSequenceNo;
+		uint16_t sequenceNo;
 	} request;
 
 	bool is_valid_CIDR(const std::string &IP);

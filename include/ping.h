@@ -21,7 +21,7 @@ public:
     std::string get_my_IP_address(const std::string &interface);
     void set_src_addr(int sockfd, const std::string &IP);
     void ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr);
-    struct icmp* ping_reply(int sockfd);
+    std::string ping_reply(int sockfd);
 };
 
 #endif // PING_H

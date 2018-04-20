@@ -1,7 +1,7 @@
 #include "discover.h"
 
 Discover::Discover() {
-	noOfAttempts = 5;	
+	noOfAttempts = 1;	
 }
 
 bool Discover::is_valid_CIDR(const std::string &IP) {
@@ -50,7 +50,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 		request* tmp = new request;
 		tmp->IP = get_IP_from_int(range);
 		tmp->trial = noOfAttempts;
-		tmp->expectedSequenceNo = 1;
+		tmp->sequenceNo = 1;
 		roundRobin.push(tmp);
 	}
 	log.debug("Discover::handle_CIDR => added " + std::to_string(roundRobin.size()) + " IPs of CIDR to queue");
@@ -69,23 +69,24 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 		tmp->trial--;
 
 		try {
-			ping.ping_request(sockfd, tmp->IP, tmp->expectedSequenceNo);
-			struct icmp* response = ping.ping_reply(sockfd);
-			if(response->icmp_seq == tmp->expectedSequenceNo) {
+			ping.ping_request(sockfd, tmp->IP, tmp->sequenceNo);
+			if (ping.ping_reply(sockfd).compare(tmp->IP) == 0) {
 				active_IPs.push_back(tmp->IP);
+				tmp->trial = 0;
 			}
 		} catch (const Error::error &e) {
-			if (tmp->trial > 0) {
-				roundRobin.push(tmp);
-			}
+			// did not ping
 		}
-
-		tmp->expectedSequenceNo++;
+		if (tmp->trial > 0) {
+			roundRobin.push(tmp);
+			tmp->sequenceNo++;
+		}
 	}
 	if (active_IPs.size() == 0) {
 		log.warn("Discover::discover_host => No active IP found in CIDR range");
 		throw Error::NO_ACTIVE_IP;
 	}
+	log.info("Discover::discover_host => " + std::to_string(active_IPs.size()) + " active IPs found in subnet");
 	return active_IPs;
 }
 

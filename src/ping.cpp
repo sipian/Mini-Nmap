@@ -136,7 +136,7 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
         delete icp;
         throw Error::UNABLE_TO_SEND_ICMP;
     }
-    log.debug("Ping::ping_request => Sent ping echo to " + destinationIP);
+    log.debug("Ping::ping_request => Sent ping echo to " + destinationIP + " seq no #" + std::to_string(icmp_seq_nr));
     delete icp;
 }
 
@@ -153,6 +153,6 @@ struct icmp* Ping::ping_reply(int sockfd) {
     char addressBuffer[INET_ADDRSTRLEN];
     void *tmpAddrPtr = &(((struct sockaddr_in*)(&senderAddr))->sin_addr);
     inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-    log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer));
+    log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer) + " seq no #" + std::to_string(ntohs(icp->icmp_seq)));
     return icp;
 }

@@ -50,7 +50,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 		request* tmp = new request;
 		tmp->IP = get_IP_from_int(range);
 		tmp->trial = noOfAttempts;
-		tmp->expectedSequenceNo = htons(1);
+		tmp->expectedSequenceNo = 1;
 		roundRobin.push(tmp);
 	}
 	log.debug("Discover::handle_CIDR => added " + std::to_string(roundRobin.size()) + " IPs of CIDR to queue");

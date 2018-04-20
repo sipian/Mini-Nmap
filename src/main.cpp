@@ -9,7 +9,7 @@ int main() {
 	/* test ping  */
 
 	Discover obj;
-	std::tuple<std::string, int> a = obj.split_CIDR("10.0.0.0/24");
+	std::tuple<std::string, int> a = obj.split_CIDR("127.0.0.0/24");
 	std::queue <Discover::request*> test= obj.handle_CIDR(std::get<0>(a), std::get<1>(a));
 	obj.discover_host(test);
 

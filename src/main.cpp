@@ -3,7 +3,9 @@
 
 int main() {
 	Ping::timeout = 1e4;
+	Ping::interface = "enp7s0";
 	Logger::logLevel = Logger::DEBUG;
+	Discover::noOfAttempts = 5;
 	/* test ping  */
 
 	Discover obj;

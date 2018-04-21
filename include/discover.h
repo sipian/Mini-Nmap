@@ -9,24 +9,64 @@
 #include <math.h>
 #include <vector>
 
+/*!
+ * \brief Class for discvering active IPs in a subnet using ping messages 
+ */
 class Discover {
-private:
+    /*!
+     * \brief logger object
+     */
 	Logger log;
 	std::string get_IP_from_int(unsigned long int a);
 	Ping ping;
-	int noOfAttempts;
 
 public:
+    /*!
+     * \brief Constructor for Discover class
+     */
 	Discover();
+
+    /*!
+     * \brief static variable to hold maximum number of trials to ping IP to detect activeness
+     */
+	static int noOfAttempts;
+
+    /*!
+     * \brief an element in the job queue, keeping track of unsuccessfull trials and sequence numbers
+     */	
 	typedef struct request {
 		std::string IP;
 		int trial;
 		uint16_t sequenceNo;
 	} request;
 
+    /*!
+     * \brief validates a CIDR input using regex
+     * \param IP IP address in CIDR format
+     * \return validation result
+     */
 	bool is_valid_CIDR(const std::string &IP);
+
+    /*!
+     * \brief split a CIDR expression into IP and netmask
+     * \param IP IP address in CIDR format
+     * \return tuple containing IP & netmask
+     */	
 	std::tuple<std::string, int> split_CIDR(const std::string &IP);
+
+    /*!
+     * \brief makes queue containing #request objects for all IPs in subnet
+     * \param IP IP address in a.b.c.d format
+     * \param netmask subnet's netmask
+     * \return queue of #request pointers
+     */	
 	std::queue <request*> handle_CIDR(std::string IP, int netmask);
+
+    /*!
+     * \brief In a round-robin manner discover active IP from queue found in handle_CIDR()
+     * \param roundRobin queue of #request pointers
+     * \return vector of active IPs
+     */		
 	std::vector<std::string> discover_host(std::queue <Discover::request*> &roundRobin);
 };
 

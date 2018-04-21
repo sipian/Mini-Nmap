@@ -1,10 +1,24 @@
 #include "ping.h"
 
 int Ping::timeout;
+std::string Ping::interface;
 
-Ping::Ping() {
-    timeout_tv.tv_sec = 0;
-    timeout_tv.tv_usec = Ping::timeout;
+unsigned short Ping::calcsum(unsigned short* buffer, int length) {
+    unsigned long sum;
+
+    /* initialize sum to zero and loop until length (in words) is 0 */
+    for (sum = 0; length > 1; length -= 2) {/* sizeof() returns number of bytes, we're interested in number of words */
+        sum += *buffer++; /* add 1 word of buffer to sum and proceed to the next */
+    }
+
+    /* we may have an extra byte */
+    if (length == 1) {
+        sum += (char)*buffer;
+    }
+
+    sum = (sum >> 16) + (sum & 0xFFFF); /* add high 16 to low 16 */
+    sum += (sum >> 16); /* add carry */
+    return ~sum;
 }
 
 int Ping::open_icmp_socket() {
@@ -29,6 +43,10 @@ int Ping::open_icmp_socket() {
         }
     }
 
+    struct timeval timeout_tv;
+    timeout_tv.tv_sec = 0;
+    timeout_tv.tv_usec = Ping::timeout;
+
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)(&timeout_tv), sizeof(timeout_tv)) < 0) {
         log.error("Ping::open_ping_socket => Error in creating timeout for socket connection -- " + Error::ErrStr());
         throw Error::TIMEOUT_NOT_CREATED;
@@ -38,7 +56,7 @@ int Ping::open_icmp_socket() {
     return sockfd;
 }
 
-std::string Ping::get_my_IP_address(const std::string &interface) {
+std::string Ping::get_my_IP_address() {
     struct ifaddrs * ifAddrStruct = NULL;
     struct ifaddrs * ifa = NULL;
     void * tmpAddrPtr = NULL;
@@ -50,7 +68,7 @@ std::string Ping::get_my_IP_address(const std::string &interface) {
             continue;
         }
         tmpInterface = std::string(ifa->ifa_name);
-        if (interface.compare(tmpInterface) == 0) {
+        if (tmpInterface.compare(Ping::interface) == 0) {
             if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4 ,a valid IP4 Address
                 tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
                 char addressBuffer[INET_ADDRSTRLEN];
@@ -61,7 +79,7 @@ std::string Ping::get_my_IP_address(const std::string &interface) {
         }
     }
 
-    log.error("Ping::set_src_addr => Source IP not found of interface " + interface);
+    log.error("Ping::set_src_addr => Source IP not found of interface " + Ping::interface);
     throw Error::HOST_IP_MISSING;
 }
 
@@ -76,28 +94,11 @@ void Ping::set_src_addr(int sockfd, const std::string &IP) {
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(IP.c_str());
 	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log.error("Ping::set_src_addr => Error in binding ICMP socket to source");
+		log.error("Ping::set_src_addr => Error in binding socket to source IP");
 		throw Error::SOCKET_NOT_BOUND;
 	}
 }
 
-unsigned short Ping::calcsum(unsigned short* buffer, int length) {
-    unsigned long sum;
-
-    /* initialize sum to zero and loop until length (in words) is 0 */
-    for (sum = 0; length > 1; length -= 2) {/* sizeof() returns number of bytes, we're interested in number of words */
-        sum += *buffer++; /* add 1 word of buffer to sum and proceed to the next */
-	}
-
-    /* we may have an extra byte */
-    if (length == 1) {
-        sum += (char)*buffer;
-    }
-
-    sum = (sum >> 16) + (sum & 0xFFFF); /* add high 16 to low 16 */
-    sum += (sum >> 16); /* add carry */
-    return ~sum;
-}
 
 void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t icmp_seq_nr) {
     struct sockaddr_in addr;
@@ -136,6 +137,7 @@ std::string Ping::ping_reply(int sockfd) {
 
     if (recvfrom(sockfd, icp, sizeof(struct icmp), 0, &senderAddr, &senderLen) < 0) {
         log.error("Ping::ping_reply => unable to receive ICMP reply -- " + Error::ErrStr());
+        delete icp;
         throw Error::UNABLE_TO_RECEIVE_ICMP;
     }
 
@@ -143,5 +145,6 @@ std::string Ping::ping_reply(int sockfd) {
     void *tmpAddrPtr = &(((struct sockaddr_in*)(&senderAddr))->sin_addr);
     inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
     log.debug("Ping::ping_request => Received ping reply from " + std::string(addressBuffer) + " seq no #" + std::to_string(ntohs(icp->icmp_seq)));
+    delete icp;
     return std::string(addressBuffer);
 }

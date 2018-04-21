@@ -28,10 +28,21 @@ namespace Color {
     };
 }
 
+/*!
+ * \brief Class for printing log messages
+ */
 class Logger {
 public:
+    /*!
+     * \brief enum of various log levels
+     */ 
     enum logLevelNames{ERROR, WARN, INFO, DEBUG};
+
+    /*!
+     * \brief static variable to user log level choice
+     */
     static enum logLevelNames logLevel;
+
     void error(const std::string &message);
     void warn(const std::string &message);
     void info(const std::string &message);

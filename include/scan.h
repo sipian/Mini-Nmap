@@ -4,10 +4,14 @@
 #include "error.h"
 #include "logger.h"
 #include "packet.h"
+
+#include <map>
+#include <chrono>
 #include <mutex>
 #include <queue>
 #include <vector>
 #include <thread>
+#include <pcap/pcap.h>
 
 /*
 	https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
@@ -29,15 +33,17 @@ class Scan: public Packet {
      */
 	std::vector<std::thread> threads;
 
+
     /*!
      * \brief function called per thread to scan for ports
      * This adds the classfied ports in global vectors
+     * \param srcIP IP of source host for port-scanning
      * \param dstIP IP of destination host for port-scanning
      * \param startPort start port-scanning from this port 
      * \param endPort end port-scanning at this port 
      * \param type what kind of scan is to be performed
      */	
-	void scanPerThread(const std::string &dstIP, int startPort, int endPort, std::string type);
+    void scanPerThread(const std::string &srcIP, const std::string &destinationIP, uint16_t startPort, uint16_t endPort, std::string type);
 
 	/*!
 	 * \brief enum of port status
@@ -47,7 +53,6 @@ class Scan: public Packet {
 			CLOSED,
 			UNKNOWN
 	};
-
     /*!
      * \brief check if received TCP header is as expected 
      * \param tcpHdr pointer to the TCP header
@@ -80,6 +85,43 @@ class Scan: public Packet {
      */	
 	void finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports);
 
+    /*!
+     * map to store information obtained from sniffer
+     */
+    std::map<uint16_t, struct tcphdr*> sniffDetails;
+
+    /*!
+     * initializes pcap sniffer and sets filter
+     * \param targetIP victim IP address to set filter
+     * \return pcap handle pointer 
+     */
+    pcap_t* initializePcap(const std::string &targetIP);
+
+    /*!
+     * obtain port number from packet obtained by sniffer
+     * \param packet packet payload obtained from sniffer
+     * \return tuple containing src port and pointer to TCP header
+     */
+    std::tuple<uint16_t, struct tcphdr*> extractSrcPort(const u_char *packet);
+
+    /*!
+     * check with a timeout if packet from targer port is received or not
+     * \param dstPort port under scanning
+     * \return link to TCP header
+     */
+    struct tcphdr* recvPacket(uint16_t dstPort);
+
+    /*!
+     * start pcap sniffer to 
+     * \param dstPort port under scanning
+     * \return link to TCP header
+     */
+    void sniff(const std::string &targetIP);
+
+    /*!
+     * keep in sniffing packets until objective is achieved
+     */
+    bool objectiveAchieved;
 public:
 
     /*!
@@ -92,6 +134,10 @@ public:
      */
 	static int noOfAttempts;
 
+    /*!
+     * \brief static variable to hold timeout in milliseconds for TCP response
+     */    
+    static int timeout;
     /*!
      * \brief vector containing list of open ports in 1 host
      */	
@@ -117,6 +163,6 @@ public:
      * \param dstIP IP address of target host
      * \param type of port-scan to do
      */	   
-    void scan(const std::string &dstIP, std::string type);
+    void scan(const std::string &srcIP, const std::string &dstIP, std::string type);
 };
 #endif // SCAN_H

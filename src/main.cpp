@@ -7,19 +7,27 @@
 
 int main() {
 	srand(time(NULL));
-	Ping::timeout = 1e4;
+	Ping::timeout = 1e3; 	//microseconds
 	Ping::interface = "enp7s0";
 	Logger::logLevel = Logger::DEBUG;
 	Discover::noOfAttempts = 1;
-	Scan::noOfThreads = 4;
-	Scan::noOfAttempts = 2;
+	Scan::noOfThreads = 1;
+	Scan::noOfAttempts = 5;
+	Scan::timeout = 10; 	//milliseconds
 
 	/* test ping  */
 
 	Discover obj;
-	std::tuple<std::string, int> a = obj.split_CIDR("128.0.0.0/24");
+	Ping ping;
+	std::tuple<std::string, int> a = obj.split_CIDR("127.0.0.1/30");
 	std::queue <Discover::request*> test= obj.handle_CIDR(std::get<0>(a), std::get<1>(a));
-	obj.discover_host(test);
+	std::vector<std::string> active_IPs = obj.discover_host(test);
+
+	Scan trial;
+	for(auto& i : active_IPs) {
+		trial.initialize();
+		trial.scan(ping.get_my_IP_address(), i, "SYN");
+	}
 
 
 

@@ -40,18 +40,20 @@ CFLAGS := -std=c++14
 # C++ flags
 CXXFLAGS := -std=c++14
 # C/C++ flags
-CPPFLAGS := -O3 -Wall -Wextra -I include -pthread
+CPPFLAGS := -O3 -Wall -Wextra -lpcap -I include 
+# C++ thread flags
+THREADFLAGS := -pthread
 # linker flags
 LDFLAGS :=
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
 # compile C source files
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(THREADFLAGS)
 # compile C++ source files
-COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $(THREADFLAGS)
 # link object files to binary
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@
+LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@ $(THREADFLAGS)
 # precompile step
 PRECOMPILE =
 # postcompile step

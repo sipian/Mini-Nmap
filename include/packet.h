@@ -7,7 +7,6 @@
 #include <tuple>
 #include <stdlib.h>
 #include <string.h>
-#include <linux/ip.h>
 #include <arpa/inet.h>
 #include <linux/tcp.h>
 #include <sys/socket.h>
@@ -22,6 +21,12 @@ class Packet {
      * \brief logger object
      */
     Logger log;
+
+    /*!
+     * \brief ping object to get IP address
+     */
+    Ping ping;
+
     /*!
      * \brief Calculates the checksum (as specified in rfc793)
      * (Ref :: http:// www.binarytides.com/raw-sockets-c-code-on-linux/)
@@ -51,9 +56,8 @@ class Packet {
     void populateTCPheader(struct tcphdr *tcpHdr, int srcPort);
 
     /*!
-     * \brief Allocate a new socket and set IP_HDRINCL, SO_REUSEADDR, SO_RCVTIMEO options to it
-     * Also bind socket to any free port 
-     * \return created socket identifier
+     * \brief Allocate a new RAW socket for sending => set IP_HDRINCL, SO_REUSEADDR options to it
+     * \return sender socket identifier
      */    
     int allocateSocket();
 
@@ -70,20 +74,16 @@ protected:
      */    
     unsigned short calcsumTCP(const char* srcIP, const char* dstIP, struct tcphdr *tcpHdr);
     
-
 public:
     Packet();
 
     /*!
-     * \brief Create new socket using allocateSocket(), set it's properties & allocate an open port to it
-     * \return tuple containing (socket, portNo, IP-address)
+     * \brief Allocate a new RAW socket for sending => set IP_HDRINCL, SO_REUSEADDR options to it
+     * \return sender socket identifier, receiver socket identitfier , receiver port
      */    
-    std::tuple<int, int, std::string> open_socket();
+    std::tuple<int, int, int> open_socket();
+
     char* create_packet(const std::string &sourceIP, int srcPort, const std::string &destinationIP);
-
-
-
-
 };
 
 #endif // PACKET_H

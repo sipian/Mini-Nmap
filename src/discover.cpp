@@ -32,7 +32,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	int count = 3;
 
 	// converting a.b.c.d into integer using bit manipulations for computation
-	std::string myIP = Ping::get_my_IP_address();
+	std::string myIP = ping.get_my_IP_address();
 
 	while ((pos = IP.find(".")) != std::string::npos) {
 	    int token = stoi(IP.substr(0, pos));
@@ -64,7 +64,7 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 	int sockfd = ping.open_icmp_socket();
 
 	std::vector<std::string> active_IPs;
-	ping.set_src_addr(sockfd, Ping::get_my_IP_address());
+	ping.set_src_addr(sockfd, ping.get_my_IP_address());
 
 	while(!roundRobin.empty()) {
 		// testing in round-robin format
@@ -94,6 +94,7 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 		log.warn("Discover::discover_host => No active IP found in CIDR range");
 		throw Error::NO_ACTIVE_IP;
 	}
+	close(sockfd);
 	log.info("Discover::discover_host => " + std::to_string(active_IPs.size()) + " active IPs found in subnet");
 	return active_IPs;
 }

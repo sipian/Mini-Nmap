@@ -49,7 +49,7 @@ public:
      * \brief static function to get current host's IPv4 address on interface Ping::interface
      * \return Host's IPv4 address
      */    
-    static std::string get_my_IP_address();
+    std::string get_my_IP_address();
 
     /*!
      * \brief Bind source IP to socket

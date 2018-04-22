@@ -1,65 +1,64 @@
 #include "packet.h"
 
 Packet::Packet() {
-    packetSize = 512;
+    // important to not include any data 
+    packetSize = sizeof(struct iphdr) + sizeof(struct tcphdr);
 }
 
 int Packet::allocateSocket() {
-    int sockfd, one = 1;
-    if((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
-        log.error("Packet::open_socket => Error while creating socket -- " + Error::ErrStr());
+    int tmp = 1;
+
+    // creating a RAW socket for sending packets
+    int sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
+
+    if(sockfd < 0) {
+        log.error("Packet::allocateSocket => Error while creating sender socket -- " + Error::ErrStr());
         throw Error::SOCKET_NOT_CREATED;
     }
 
     // Set option IP_HDRINCL (headers are included in packet)
-    if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, (char *)&one, sizeof(one)) < 0) {
-        log.error("Packet::open_socket => Error while setting socket options -- " + Error::ErrStr());
+    if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, (char *)&tmp, sizeof(tmp)) < 0) {
+        log.error("Packet::allocateSocket => Error while setting sender socket options -- " + Error::ErrStr());
         throw Error::IP_HDRINCL_NOT_SET;
     }
     // Set option SO_REUSEADDR to reuse ports if previous connection operation killed
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one)) < 0) {
-        log.error("Packet::open_socket => Error while setting socket options -- " + Error::ErrStr());
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&tmp, sizeof(tmp)) < 0) {
+        log.error("Packet::allocateSocket => Error while setting sender socket options -- " + Error::ErrStr());
         throw Error::SO_REUSEADDR_NOT_SET;
-    }
-
-    struct timeval timeout_tv;
-    timeout_tv.tv_sec = 0;
-    timeout_tv.tv_usec = Ping::timeout;     // same timeout as ping service discovery
-
-    // Set a timeout for receiving packet
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)(&timeout_tv), sizeof(timeout_tv)) < 0) {
-        log.error("Packet::allocateSocket => Error in creating timeout for socket connection -- " + Error::ErrStr());
-        throw Error::TIMEOUT_NOT_CREATED;
-    }
-
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = 0;
-
-    // binding any free port to socket
-    if (bind(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-        log.error("Packet::allocateSocket => unable to bind port to socket");
-        throw Error::SOCKET_NOT_BOUND;
     }
     return sockfd;
 }
 
-std::tuple<int, int, std::string> Packet::open_socket() {
-    int sockfd = allocateSocket();
+std::tuple<int, int, int> Packet::open_socket() {
+
+    int sender_sockfd = allocateSocket();
     int port;
 
-    // getting the alloted port number of socket 
-    struct sockaddr_in sin;
-    socklen_t len = sizeof(sin);
-    if (getsockname(sockfd, (struct sockaddr *)&sin, &len) < 0) {
+    // allocating a socket for receiving packets 
+    int receiver_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;              //any free port
+
+    // binding any free port to socket
+    if (bind(receiver_sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+        log.error("Packet::allocateSocket => unable to bind port to socket");
+        throw Error::SOCKET_NOT_BOUND;
+    }
+
+    // getting the alloted port number of socket
+    socklen_t len = sizeof(addr);
+    if (getsockname(receiver_sockfd, (struct sockaddr *)&addr, &len) < 0) {
         log.error("Packet::open_connection => unable to getsockname for allocated socket");
         throw Error::UNABLE_TO_GET_SOCKET_DETAILS;
     }
     else {
-        port = ntohs(sin.sin_port);
+        port = ntohs(addr.sin_port);
     }
-    return std::make_tuple(sockfd, port, Ping::get_my_IP_address());
+
+    log.info("Packet::open_socket => Allocated socket at srcport " + std::to_string(port));
+    return std::make_tuple(sender_sockfd, receiver_sockfd, port);
 }
 
 unsigned short Packet::calcsum(unsigned short *ptr,int nbytes) {

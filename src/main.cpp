@@ -1,15 +1,23 @@
+#include <time.h>
+#include <stdlib.h>
+#include "scan.h"
+#include "ping.h"
 #include "logger.h"
 #include "discover.h"
 
 int main() {
+	srand(time(NULL));
 	Ping::timeout = 1e4;
 	Ping::interface = "enp7s0";
 	Logger::logLevel = Logger::DEBUG;
-	Discover::noOfAttempts = 5;
+	Discover::noOfAttempts = 1;
+	Scan::noOfThreads = 4;
+	Scan::noOfAttempts = 2;
+
 	/* test ping  */
 
 	Discover obj;
-	std::tuple<std::string, int> a = obj.split_CIDR("127.0.0.0/24");
+	std::tuple<std::string, int> a = obj.split_CIDR("128.0.0.0/24");
 	std::queue <Discover::request*> test= obj.handle_CIDR(std::get<0>(a), std::get<1>(a));
 	obj.discover_host(test);
 

@@ -63,17 +63,19 @@ std::string Ping::get_my_IP_address() {
     std::string tmpInterface;
     getifaddrs(&ifAddrStruct);
 
+    // looping over all the interfaces
     for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
         if (!ifa->ifa_addr) {
             continue;
         }
         tmpInterface = std::string(ifa->ifa_name);
+
         if (tmpInterface.compare(Ping::interface) == 0) {
             if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4 ,a valid IP4 Address
                 tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
                 char addressBuffer[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-                log.info("Ping::get_my_IP_address => My IP address is " + std::string(addressBuffer));
+                log.info("Ping::get_my_IP_address => My IP address is " + std::string(addressBuffer) + " on interface " + Ping::interface);
                 return std::string(addressBuffer);
             }
         }
@@ -113,6 +115,7 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
 
     struct icmp* icp = new (struct icmp);
 
+    // setting ICMP headers
     icp->icmp_type = ICMP_ECHO;
     icp->icmp_code = 0;
     icp->icmp_cksum = 0;
@@ -121,6 +124,7 @@ void Ping::ping_request(int sockfd, const std::string &destinationIP, uint16_t i
 
     icp->icmp_cksum = calcsum((unsigned short*)icp, sizeof(struct icmp));
 
+    // send 1 ICMP packet over an unreliable network
     if (sendto(sockfd, icp, sizeof(struct icmp), 0, (struct sockaddr*)(&addr), sizeof(struct sockaddr)) < 0) {
         log.error("Ping::ping_request => unable to send ICMP echo -- " + Error::ErrStr());
         delete icp;
@@ -135,6 +139,7 @@ std::string Ping::ping_reply(int sockfd) {
     struct sockaddr senderAddr;
     socklen_t senderLen = sizeof(senderAddr);
 
+    // wait for ICMP reply with timeout
     if (recvfrom(sockfd, icp, sizeof(struct icmp), 0, &senderAddr, &senderLen) < 0) {
         log.error("Ping::ping_reply => unable to receive ICMP reply -- " + Error::ErrStr());
         delete icp;

@@ -40,21 +40,16 @@ public:
     static int timeout;
 
     /*!
-     * \brief Constructor for Ping class
-     */
-    Ping();
-
-    /*!
      * \brief opens a new ICMP socket and sets SO_RCVTIMEO to Ping::timeout
      * \return ICMP socket identifier
      */
     int open_icmp_socket();
 
     /*!
-     * \brief gets current host IPv4 address on interface Ping::interface
+     * \brief static function to get current host's IPv4 address on interface Ping::interface
      * \return Host's IPv4 address
      */    
-    std::string get_my_IP_address();
+    static std::string get_my_IP_address();
 
     /*!
      * \brief Bind source IP to socket

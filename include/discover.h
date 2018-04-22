@@ -4,10 +4,12 @@
 #include "ping.h"
 #include "error.h"
 #include "logger.h"
+#include <tuple>
 #include <regex>
 #include <queue>
 #include <math.h>
 #include <vector>
+#include <stdlib.h>
 
 /*!
  * \brief Class for discvering active IPs in a subnet using ping messages 
@@ -17,14 +19,20 @@ class Discover {
      * \brief logger object
      */
 	Logger log;
+
+    /*!
+     * \brief transforms a int IP into a.b.c.d format
+     * \param IP in unsigned long int
+     * \return IP in a.b.c. notation
+     */
 	std::string get_IP_from_int(unsigned long int a);
+
+    /*!
+     * \brief ping object to perform ICMP scanning
+     */
 	Ping ping;
 
 public:
-    /*!
-     * \brief Constructor for Discover class
-     */
-	Discover();
 
     /*!
      * \brief static variable to hold maximum number of trials to ping IP to detect activeness

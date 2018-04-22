@@ -32,7 +32,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	int count = 3;
 
 	// converting a.b.c.d into integer using bit manipulations for computation
-	std::string myIP = ping.get_my_IP_address();
+	std::string myIP = Ping::get_my_IP_address();
 
 	while ((pos = IP.find(".")) != std::string::npos) {
 	    int token = stoi(IP.substr(0, pos));
@@ -48,7 +48,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	for (unsigned long int i = 1; i < limit; ++i)
 	{
 		range++;
-		if(get_IP_from_int(range).compare(myIP) > 0) { 	//  do'nt include own IP address as request
+		if(get_IP_from_int(range).compare(myIP) != 0) { 	//  do'nt include own IP address as request
 			request* tmp = new (struct request);
 			tmp->IP = get_IP_from_int(range);
 			tmp->trial = Discover::noOfAttempts;
@@ -62,13 +62,15 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 
 std::vector<std::string> Discover::discover_host(std::queue <Discover::request*> &roundRobin) {
 	int sockfd = ping.open_icmp_socket();
+
 	std::vector<std::string> active_IPs;
-	ping.set_src_addr(sockfd, ping.get_my_IP_address());
+	ping.set_src_addr(sockfd, Ping::get_my_IP_address());
+
 	while(!roundRobin.empty()) {
 		// testing in round-robin format
 		request* tmp = roundRobin.front();
 		roundRobin.pop();
-		log.debug("Discover::discover_host => checking activeness of " + tmp->IP);
+		log.debug("Discover::discover_host => checking activeness of " + tmp->IP + " - trial #" + std::to_string(tmp->trial));
 		tmp->trial--;
 
 		try {
@@ -79,6 +81,9 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 			}
 		} catch (const Error::error &e) {
 			// did not ping
+			if (! (e == Error::UNABLE_TO_RECEIVE_ICMP || e == Error::UNABLE_TO_SEND_ICMP)) {
+				exit(EXIT_FAILURE); 	//exit if error something else other than send, recvfrom
+			}
 		}
 		if (tmp->trial > 0) {
 			roundRobin.push(tmp);

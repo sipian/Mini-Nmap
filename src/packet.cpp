@@ -2,8 +2,64 @@
 
 Packet::Packet() {
     packetSize = 512;
+}
+
+int Packet::allocateSocket() {
+    int sockfd, one = 1;
+    if((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
+        log.error("Packet::open_socket => Error while creating socket -- " + Error::ErrStr());
+        throw Error::SOCKET_NOT_CREATED;
+    }
+
+    // Set option IP_HDRINCL (headers are included in packet)
+    if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, (char *)&one, sizeof(one)) < 0) {
+        log.error("Packet::open_socket => Error while setting socket options -- " + Error::ErrStr());
+        throw Error::IP_HDRINCL_NOT_SET;
+    }
+    // Set option SO_REUSEADDR to reuse ports if previous connection operation killed
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one)) < 0) {
+        log.error("Packet::open_socket => Error while setting socket options -- " + Error::ErrStr());
+        throw Error::SO_REUSEADDR_NOT_SET;
+    }
+
+    struct timeval timeout_tv;
     timeout_tv.tv_sec = 0;
     timeout_tv.tv_usec = Ping::timeout;     // same timeout as ping service discovery
+
+    // Set a timeout for receiving packet
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)(&timeout_tv), sizeof(timeout_tv)) < 0) {
+        log.error("Packet::allocateSocket => Error in creating timeout for socket connection -- " + Error::ErrStr());
+        throw Error::TIMEOUT_NOT_CREATED;
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+
+    // binding any free port to socket
+    if (bind(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+        log.error("Packet::allocateSocket => unable to bind port to socket");
+        throw Error::SOCKET_NOT_BOUND;
+    }
+    return sockfd;
+}
+
+std::tuple<int, int, std::string> Packet::open_socket() {
+    int sockfd = allocateSocket();
+    int port;
+
+    // getting the alloted port number of socket 
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    if (getsockname(sockfd, (struct sockaddr *)&sin, &len) < 0) {
+        log.error("Packet::open_connection => unable to getsockname for allocated socket");
+        throw Error::UNABLE_TO_GET_SOCKET_DETAILS;
+    }
+    else {
+        port = ntohs(sin.sin_port);
+    }
+    return std::make_tuple(sockfd, port, Ping::get_my_IP_address());
 }
 
 unsigned short Packet::calcsum(unsigned short *ptr,int nbytes) {
@@ -29,66 +85,6 @@ unsigned short Packet::calcsum(unsigned short *ptr,int nbytes) {
   return(answer);
 }
 
-int Packet::allocateSocket() {
-    int sockfd, one = 1;
-    if((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
-        log.error("Packet::open_socket => Error while creating socket");
-        throw Error::SOCKET_NOT_CREATED;
-    }
-
-    // Set option IP_HDRINCL (headers are included in packet)
-    if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, (char *)&one, sizeof(one)) < 0) {
-        log.error("Packet::open_socket => Error while setting socket options");
-        throw Error::IP_HDRINCL_NOT_SET;
-    }
-    // Set option SO_REUSEADDR to reuse ports if previous connection operation killed
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one))) {
-        log.error("Packet::open_socket => Error while setting socket options");
-        throw Error::SO_REUSEADDR_NOT_SET;
-    }
-    // Set a timeout for receiving packet
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)(&timeout_tv), sizeof(timeout_tv)) < 0) {
-        log.error("Ping::open_ping_socket => Error in creating timeout for socket connection -- " + Error::ErrStr());
-        throw Error::TIMEOUT_NOT_CREATED;
-    }
-    return sockfd;
-}
-
-int Packet::findFreePort(int sockfd) {
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = 0;
-    int attempts = 0;
-    // loop until we get a port in non-special region
-    while (addr.sin_port < 1024) {
-        if (++attempts > 500) {
-            log.error("Packet::findFreePort => Failed to reserve a port");
-            throw Error::NO_FREE_PORT;
-        }
-        int sock = allocateSocket();
-        if (sock == 0) {
-            continue;
-        }
-        if (bind(sock, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
-            if (errno == EADDRINUSE) {
-                /* address already in use */
-                continue;
-            }
-            perror("bind()");
-            return -1;
-        }
-        if (getsockname(sock, (struct sockaddr*) &addr, &len) != 0) {
-            perror("getsockname()");
-            return -1;
-        }
-    }
-}
-
-Packet::open_connection() {
-
-}
-
-// Reference :: 
 unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct tcphdr *tcpHdr) {
     struct pseudoTCPPacket pTCPPacket;
     pTCPPacket.srcAddr = inet_addr(srcIP);    //32 bit format of source address
@@ -115,7 +111,27 @@ unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct t
           sizeof(struct tcphdr))));
 }
 
-void Packet::create_packet(const std::string &sourceIP, int srcPort, const std::string &destinationIP, int dstPort) {
+void Packet::populateTCPheader(struct tcphdr *tcpHdr, int srcPort) {
+    tcpHdr->source = htons(srcPort);    // 16 bit in nbp format of source port
+    tcpHdr->dest = 0;      // 16 bit in nbp format of destination port
+    tcpHdr->seq = 0;           // 32 bit sequence number
+    tcpHdr->ack_seq = 0x0;              // 32 bit ack sequence number, depends whether ACK is set or not
+    tcpHdr->doff = 5;                   // Data offset :: 4 bits: 5 x 32-bit words on tcp header
+    tcpHdr->res1 = 0;                   // Reserved :: 4 bits: Not used
+    tcpHdr->cwr = 0;                    // Congestion control mechanism
+    tcpHdr->ece = 0;                    // Congestion control mechanism
+    tcpHdr->urg = 0;                    // Urgent flag
+    tcpHdr->ack = 0;                    // Ack
+    tcpHdr->psh = 0;                    // Push data immediately
+    tcpHdr->rst = 0;                    // RST flag
+    tcpHdr->syn = 0;                    // SYN flag
+    tcpHdr->fin = 0;                    // FIN flag
+    tcpHdr->window = htons(155);        // 0xFFFF; // 16 bit max number of databytes MSS
+    tcpHdr->check = 0;                  // 16 bit check sum. Can't calculate at this point
+    tcpHdr->urg_ptr = 0;                // 16 bit indicate the urgent data. Only if URG flag is set
+}
+
+char* Packet::create_packet(const std::string &sourceIP, const int srcPort, const std::string &destinationIP) {
     char* packet = new char[packetSize];
     const char* srcIP = sourceIP.c_str();
     const char* dstIP = destinationIP.c_str(); 
@@ -140,14 +156,8 @@ void Packet::create_packet(const std::string &sourceIP, int srcPort, const std::
     ipHdr->daddr = inet_addr(dstIP); // 32 bit format of source address
     
     ipHdr->check = calcsum((unsigned short *) packet, ipHdr->tot_len);
-
-    uint32_t sequenceNo = 1138083240;
-
-    populateTCPheader(tcpHdr, srcPort, dstPort,  sequenceNo);
-    tcpHdr->check = calcsumTCP(srcIP, dstIP, tcpHdr);
-
-
-
+    populateTCPheader(tcpHdr, srcPort);
+    return packet;
 }
 
 

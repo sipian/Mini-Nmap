@@ -18,26 +18,105 @@ class Scan: public Packet {
      * \brief logger object
      */
 	Logger log;
+
+    /*!
+     * \brief mutex used when collecting result from all threads
+     */
 	std::mutex lock;
+
+    /*!
+     * \brief vector of threads for port-scanning
+     */
 	std::vector<std::thread> threads;
+
+    /*!
+     * \brief function called per thread to scan for ports
+     * This adds the classfied ports in global vectors
+     * \param dstIP IP of destination host for port-scanning
+     * \param startPort start port-scanning from this port 
+     * \param endPort end port-scanning at this port 
+     * \param type what kind of scan is to be performed
+     */	
 	void scanPerThread(const std::string &dstIP, int startPort, int endPort, std::string type);
-	void setTCPHeader(struct tcphdr *tcpHdr, std::string type);
-	typedef struct query {
-		uint16_t port;
-		int trial;
-		int seqNo;		
-	} query;
-public:
-	static int noOfThreads;
-	static int noOfAttempts;
+
+	/*!
+	 * \brief enum of port status
+	 */	
 	enum scanResult {
 			OPEN,
 			CLOSED,
 			UNKNOWN
 	};
+
+    /*!
+     * \brief check if received TCP header is as expected 
+     * \param tcpHdr pointer to the TCP header
+     * \param type what kind of scan is to be performed
+     * \return status of current port
+     */		
 	scanResult checkTCPHeader(struct tcphdr *tcpHdr, std::string type);
-	std::vector<int> openPorts;
+
+    /*!
+     * \brief set appropriate TCP flags according to type of port-scan
+     * \param tcpHdr pointer to the TCP header
+     * \param type what kind of scan is to be performed
+     */	
+    void setTCPHeader(struct tcphdr *tcpHdr, std::string type);
+
+    /*!
+     * \brief an element in the job queue, keeping track of unsuccessfull trials
+     */	    
+	typedef struct query {
+		uint16_t port;
+		int trial;
+		int seqNo;		
+	} query;
+
+    /*!
+     * \brief collect results from all threads into common vectors
+     * \param open_Ports vector of open-ports calculated by a thread
+     * \param closed_Ports vector of closed-ports calculated by a thread
+     * \param unknown_Ports vector of unknown-ports calculated by a thread
+     */	
+	void finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports);
+
+public:
+
+    /*!
+     * \brief static variable to hold maximum number of threads for speedup
+     */
+	static int noOfThreads;
+
+    /*!
+     * \brief static variable to hold maximum number of trials to perform scan
+     */
+	static int noOfAttempts;
+
+    /*!
+     * \brief vector containing list of open ports in 1 host
+     */	
+	std::vector<uint16_t> openPorts;
+
+    /*!
+     * \brief vector containing list of closed ports in 1 host
+     */	
+    std::vector<uint16_t> closedPorts;
+
+    /*!
+     * \brief vector containing list of unknown ports in 1 host
+     */	
+    std::vector<uint16_t> unknownPorts;
+
+    /*!
+     * \brief free threads and clear the vectors before starting a new scan
+     */	   
 	void initialize();
-	void scan(const std::string &dstIP, std::string type);
+    
+    /*!
+     * \brief scan for port in a host
+     * \param dstIP IP address of target host
+     * \param type of port-scan to do
+     */	   
+    void scan(const std::string &dstIP, std::string type);
 };
 #endif // SCAN_H

@@ -130,6 +130,15 @@ void Scan::scanPerThread(const std::string &destinationIP, uint16_t startPort, u
     		unknown_Ports.push_back(tmp->port);
     	}	    
     }
+    finishTask(open_Ports, closed_Ports, unknown_Ports);
+}
+
+void Scan::finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports) {
+	lock.lock();
+	openPorts.insert(openPorts.begin(), open_Ports.begin(), open_Ports.end());
+	closedPorts.insert(openPorts.begin(), closed_Ports.begin(), closed_Ports.end());
+	unknownPorts.insert(openPorts.begin(), unknown_Ports.begin(), unknown_Ports.end());	
+	lock.unlock();
 }
 
 void Scan::initialize() {
@@ -143,6 +152,8 @@ void Scan::initialize() {
 	lock.unlock();
 	threads.clear();
 	openPorts.clear();
+	closedPorts.clear();
+	unknownPorts.clear();
 }
 
 void Scan::scan(const std::string &dstIP, std::string type = "SYN") {

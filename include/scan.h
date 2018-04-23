@@ -6,14 +6,11 @@
 #include "logger.h"
 #include "packet.h"
 
-#include <map>
 #include <chrono>
 #include <mutex>
 #include <queue>
 #include <vector>
 #include <thread>
-#include <pcap.h>
-#include <condition_variable>
 
 /*
     https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
@@ -96,21 +93,6 @@ class Scan: public Packet {
      */ 
     void finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports);
 
-
-    /*!
-     * initializes pcap sniffer and sets filter
-     * \param targetIP victim IP address to set filter
-     * \return pcap handle pointer 
-     */
-    pcap_t* initializePcap(const std::string &targetIP);
-
-    /*!
-     * obtain port number from packet obtained by sniffer
-     * \param packet packet payload obtained from sniffer
-     * \return tuple containing src port and pointer to TCP header
-     */
-    std::tuple<uint16_t, struct tcphdr*> extractSrcPort(const u_char *packet);
-
     /*!
      * check with a timeout if packet from targer port is received or not
      * \param dstPort port under scanning
@@ -124,8 +106,6 @@ class Scan: public Packet {
      * \return link to TCP header
      */
     void sniff(const std::string &targetIP);
-
-    bool startScanning;
 
 public:
 

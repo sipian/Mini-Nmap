@@ -14,7 +14,7 @@ int main() {
 
 	Scan::noOfThreads = 1;
 	Scan::noOfAttempts = 5;
-	Scan::timeout = 1e6; 	//microseconds
+	Scan::timeout = 1e3; 	//microseconds
 
 	Sniff::packetSize = 500;
 
@@ -30,8 +30,6 @@ int main() {
 	for(auto& i : active_IPs) {
 		trial.scan(ping.get_my_IP_address(), i, "SYN");
 	}
-
-
 
 	// Ping obj;
 	// int sockfd = obj.open_icmp_socket();

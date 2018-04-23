@@ -120,13 +120,13 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
 
 void Scan::finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports) {
 	lock.lock();
-	
+
 	openPorts.insert(openPorts.begin(), open_Ports.begin(), open_Ports.end());
-	closedPorts.insert(openPorts.begin(), closed_Ports.begin(), closed_Ports.end());
-	unknownPorts.insert(openPorts.begin(), unknown_Ports.begin(), unknown_Ports.end());
+	closedPorts.insert(closedPorts.begin(), closed_Ports.begin(), closed_Ports.end());
+	unknownPorts.insert(unknownPorts.begin(), unknown_Ports.begin(), unknown_Ports.end());
 	
 	lock.unlock();
-	
+
 	open_Ports.clear();
 	closed_Ports.clear();
 	unknown_Ports.clear();
@@ -164,7 +164,7 @@ struct tcphdr* Scan::recvPacket(uint16_t dstPort) {
 void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string type = "SYN") {
 
 	initialize();
-	std::thread snifferThread(&Sniff::sniff, this->sniffer, dstIP);		//starting a thread to start sniffing IP packets
+	std::thread snifferThread(&Sniff::sniff, &(this->sniffer), dstIP);		//starting a thread to start sniffing IP packets
 
 	// port range 
 	uint16_t startPort = 5430; 	//not doing 0
@@ -177,9 +177,10 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
 		threads.push_back(std::thread(&Scan::scanPerThread, this, srcIP, dstIP, startPort, nextPort, type));
 		startPort += binSize;
 	}
-	for (auto &th : threads) {
-		th.join();
+	for (int i = 0; i < noOfThreads; ++i) {
+		threads[i].join();
 	}
+	log.info("Scan::scan => Finished port scan of " + dstIP);
 	sniffer.objectiveAchieved = true;
 	snifferThread.join();
 	threads.clear();

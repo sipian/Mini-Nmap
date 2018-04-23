@@ -4,8 +4,8 @@
 #include "error.h"
 #include "logger.h"
 
-
 #include <map>
+#include <atomic>
 #include <unistd.h>
 #include <linux/tcp.h>
 #include <netinet/ip.h>
@@ -34,7 +34,7 @@ public:
     /*!
      * keep in sniffing packets until objective is achieved
      */
-    bool objectiveAchieved;
+    std::atomic<bool> objectiveAchieved;
 
     /*!
      * \brief static variable to hold sniffer recvfrom packet size

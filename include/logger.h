@@ -12,6 +12,7 @@ namespace Color {
         FG_BLUE     = 34,
         FG_DEFAULT  = 39,
         FG_YELLOW   = 33,
+        FG_CYAN     = 36,
         BG_RED      = 41,
         BG_GREEN    = 42,
         BG_BLUE     = 44,
@@ -47,6 +48,7 @@ public:
     void warn(const std::string &message);
     void info(const std::string &message);
     void debug(const std::string &message);
+    void result(const std::string &message);
 };
 
 /*

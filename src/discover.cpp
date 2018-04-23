@@ -60,7 +60,16 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	return roundRobin;
 }
 
-std::vector<std::string> Discover::discover_host(std::queue <Discover::request*> &roundRobin) {
+std::vector<std::string> Discover::discover_host(const std::string &CIDR) {
+	
+	if (! is_valid_CIDR(CIDR)) {
+		log.error("Discover::discover_host => CIDR input is invalid");
+		throw Error::INVALID_CIDR;
+	}
+
+	std::tuple<std::string, int> a = split_CIDR(CIDR);
+	std::queue <Discover::request*> roundRobin = handle_CIDR(std::get<0>(a), std::get<1>(a));
+
 	int sockfd = ping.open_icmp_socket();
 
 	std::vector<std::string> active_IPs;

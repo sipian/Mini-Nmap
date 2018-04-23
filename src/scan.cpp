@@ -161,7 +161,26 @@ struct tcphdr* Scan::recvPacket(uint16_t dstPort) {
 	return NULL;
 }
 
+void Scan::print(const std::string &dstIP, int duration) {
+
+	log.result("\n\n\n\n\t\tscan report for " + dstIP);
+	log.result("\t\tNot shown: " + std::to_string(closedPorts.size()) + " closed ports");
+	log.result("\t\t" + std::to_string(openPorts.size()) + " open ports");
+	std::sort(openPorts.begin(), openPorts.end());
+	for(auto &i : openPorts) {
+		log.result("\t\t\t" + std::to_string(i));
+	}	
+	log.result("\t\t" + std::to_string(unknownPorts.size()) + " filtered/unknown ports");
+	std::sort(unknownPorts.begin(), unknownPorts.end());
+	for(auto &i : unknownPorts) {
+		log.result("\t\t\t" + std::to_string(i));
+	}	
+
+	log.result("\t\tPort-Scanning done in " + std::to_string(duration) + " seconds\n\n\n\n");
+}
+
 void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string type = "SYN") {
+	std::chrono::time_point<std::chrono::high_resolution_clock> begin = std::chrono::high_resolution_clock::now();
 
 	initialize();
 	std::thread snifferThread(&Sniff::sniff, &(this->sniffer), dstIP);		//starting a thread to start sniffing IP packets
@@ -184,4 +203,6 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
 	sniffer.objectiveAchieved = true;
 	snifferThread.join();
 	threads.clear();
+	std::chrono::time_point<std::chrono::high_resolution_clock> end = std::chrono::high_resolution_clock::now();
+	print(dstIP, std::chrono::duration_cast<std::chrono::seconds> (end - begin).count());
 }

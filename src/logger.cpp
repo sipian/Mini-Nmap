@@ -33,3 +33,10 @@ void Logger::debug(const std::string &message) {
 	    std::cout << red << message << def << std::endl;
 	}
 }
+
+void Logger::result(const std::string &message) {
+		Color::Modifier red(Color::FG_CYAN);
+	    Color::Modifier def(Color::FG_DEFAULT);
+	    std::cout << red << message << def << std::endl;
+}
+

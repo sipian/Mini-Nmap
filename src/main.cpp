@@ -1,10 +1,13 @@
-#include <time.h>
-#include <stdlib.h>
-
 #include "scan.h"
 #include "discover.h"
 
-int main() {
+#include <time.h>
+#include <stdlib.h>
+
+/*!
+ * \brief Initialize static variables and set seed for rand()
+ */
+void initialize() {
 	srand(time(NULL));
 
 	Ping::timeout = 1e3; 	//microseconds
@@ -17,26 +20,35 @@ int main() {
 	Scan::timeout = 1e3; 	//microseconds
 
 	Sniff::packetSize = 500;
+}
 
-	/* test ping  */
-
+/*!
+ * \brief Perform port scan
+ * \param CIDR subnet details
+ * \param type type of port scan
+ */
+void scan(const std::string &CIDR, const std::string &type) {
+	Logger log;
 	Discover obj;
-	Ping ping;
-	std::tuple<std::string, int> a = obj.split_CIDR("127.0.0.1/30");
-	std::queue <Discover::request*> test= obj.handle_CIDR(std::get<0>(a), std::get<1>(a));
-	std::vector<std::string> active_IPs = obj.discover_host(test);
-
-	Scan trial;
+	log.result("\n\n\n\nStarting port-scanner 1.0.0\n");
+	
+	std::vector<std::string> active_IPs = obj.discover_host(CIDR);
+	log.result("\n\n\n\n\tThere are " + std::to_string(active_IPs.size()) + " active IPs in the subnet");
 	for(auto& i : active_IPs) {
-		trial.scan(ping.get_my_IP_address(), i, "SYN");
+		log.result("\t\t" + i);
 	}
+	std::cout << "\n\n\n\n";
 
-	// Ping obj;
-	// int sockfd = obj.open_icmp_socket();
-	// obj.set_src_addr(sockfd, obj.get_my_IP_address("enp7s0"));
-	// while(true) {
-	// 	obj.ping_request(sockfd, "192.168.35.7", 1);
-	// 	obj.ping_reply(sockfd);
-	// }
+	Ping ping;
+	Scan trial;
+
+	for(auto& i : active_IPs) {
+		trial.scan(ping.get_my_IP_address(), i, type);
+	}
+}
+
+int main() {
+	initialize();
+	scan("127.0.0.1/30", "SYN");	
     return 0;
 }

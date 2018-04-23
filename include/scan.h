@@ -11,6 +11,7 @@
 #include <queue>
 #include <vector>
 #include <thread>
+#include <algorithm>
 
 /*
     https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
@@ -107,6 +108,10 @@ class Scan: public Packet {
      */
     void sniff(const std::string &targetIP);
 
+    /*!
+     * Print port scan results
+    */
+    void print(const std::string &dstIP, int duration);
 public:
 
     /*!

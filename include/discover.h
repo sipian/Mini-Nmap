@@ -21,32 +21,16 @@ class Discover {
 	Logger log;
 
     /*!
+     * \brief ping object to perform ICMP scanning
+     */
+    Ping ping;
+
+    /*!
      * \brief transforms a int IP into a.b.c.d format
      * \param IP in unsigned long int
      * \return IP in a.b.c. notation
      */
 	std::string get_IP_from_int(unsigned long int a);
-
-    /*!
-     * \brief ping object to perform ICMP scanning
-     */
-	Ping ping;
-
-public:
-
-    /*!
-     * \brief static variable to hold maximum number of trials to ping IP to detect activeness
-     */
-	static int noOfAttempts;
-
-    /*!
-     * \brief an element in the job queue, keeping track of unsuccessfull trials and sequence numbers
-     */	
-	typedef struct request {
-		std::string IP;
-		int trial;
-		uint16_t sequenceNo;
-	} request;
 
     /*!
      * \brief validates a CIDR input using regex
@@ -63,19 +47,34 @@ public:
 	std::tuple<std::string, int> split_CIDR(const std::string &IP);
 
     /*!
+     * \brief an element in the job queue, keeping track of unsuccessfull trials and sequence numbers
+     */ 
+    typedef struct request {
+        std::string IP;
+        int trial;
+        uint16_t sequenceNo;
+    } request;
+
+    /*!
      * \brief makes queue containing #request objects for all IPs in subnet
      * \param IP IP address in a.b.c.d format
      * \param netmask subnet's netmask
      * \return queue of #request pointers
-     */	
-	std::queue <request*> handle_CIDR(std::string IP, int netmask);
+     */ 
+    std::queue <request*> handle_CIDR(std::string IP, int netmask);
+public:
+
+    /*!
+     * \brief static variable to hold maximum number of trials to ping IP to detect activeness
+     */
+    static int noOfAttempts;
 
     /*!
      * \brief In a round-robin manner discover active IP from queue found in handle_CIDR()
      * \param roundRobin queue of #request pointers
      * \return vector of active IPs
      */		
-	std::vector<std::string> discover_host(std::queue <Discover::request*> &roundRobin);
+	std::vector<std::string> discover_host(const std::string &CIDR);
 };
 
 #endif // DISCOVER_H

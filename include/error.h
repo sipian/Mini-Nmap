@@ -33,7 +33,7 @@ public:
 			INVALID_PORT,
 			UNABLE_TO_SNIFF,
 			INVALID_FILTER,
-			NOT_TCP
+			OTHER_PACKET
 	};
 	
 	/*!

@@ -133,94 +133,23 @@ void Scan::initialize() {
 		throw Error::RESOURCE_BUSY;
 	}
 
-	objectiveAchieved = false;
 	// open all mutex locks and clear vectors
+	sniffer.objectiveAchieved = false;
 	lock.unlock();
 	threads.clear();
 	openPorts.clear();
 	closedPorts.clear();
-	sniffDetails.clear();
+	sniffer.sniffDetails.clear();
 	unknownPorts.clear();
-}
-
-pcap_t* Scan::initializePcap(const std::string &targetIP) {
-    pcap_t *handle;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    struct bpf_program filter;
-    const char* filter_exp = (std::string("tcp and src host " + targetIP)).c_str();
-    bpf_u_int32 subnet_mask, ip;
-
-    /* Open the device */
-    if ( (handle= pcap_open_live("any",         // name of interface
-                              65536,            // portion of the packet to capture.65536 guarantees that the whole packet will be captured on all the link layers
-                              0,                // promiscuous mode
-                              Scan::timeout,    // read timeout
-                              errbuf            // error buffer
-                              ) ) == NULL)
-    { 
-        log.error("Scan::initializePcap => Unable to open the adapter.");
-        throw Error::UNABLE_TO_SNIFF;
-    }
-
-    if (pcap_compile(handle, &filter, filter_exp, 0, ip) < 0) {
-        log.error("Scan::initializePcap => Bad filter - " + std::string(pcap_geterr(handle)));
-        throw Error::INVALID_FILTER;
-    }
-    if (pcap_setfilter(handle, &filter) < 0) {
-        log.error("Scan::initializePcap => Error setting filter - " + std::string(pcap_geterr(handle)));
-        throw Error::INVALID_FILTER;
-    }
-    log.info("Scan::initializePcap => Initialized PCAP handle and set filter also");
-    return handle;
-}
-
-std::tuple<uint16_t, struct tcphdr*> Scan::extractSrcPort(const u_char *packet) {
-
-    const int ethernet_header_length = 14; 
-
-    const u_char *ip_header = packet + ethernet_header_length;      	  //Find start of IP header
-    int ip_header_length = ((*ip_header) & 0x0F)*4;       				  //The second-half of the first byte in ip_header contains the IP header length (IHL)
-
-    /* Add the ethernet and ip header length to the start of the packet
-       to find the beginning of the TCP header */
-    struct tcphdr* tcp_header = (struct tcphdr *)(packet + ethernet_header_length + ip_header_length);
-    uint16_t srcPort = ntohs(tcp_header->source);
-    return std::make_tuple(srcPort, tcp_header);
-}
-
-void Scan::sniff(const std::string &targetIP) {
-
-    pcap_t* handle = initializePcap(targetIP);
-	struct pcap_pkthdr *header;
-	const u_char *pkt_data;    
-
-    /* Retrieve the packets */
-    while(!objectiveAchieved) {
-
-        int res = pcap_next_ex(handle, &header, &pkt_data);
-
-        if(res < 0) {
-        	log.error("Scan::sniff => pcap_next_ex is giving errors");
-            throw Error::UNABLE_TO_SNIFF;
-        }
-        else if (res == 0) {
-        	log.warn("Scan::sniff => pcap_next_ex has timed-out");
-        }
-        else {
-        	std::tuple<uint16_t, struct tcphdr*> pkt = extractSrcPort(pkt_data);
-        	log.info("Got packet from " + targetIP + ":" + std::to_string(std::get<0>(pkt)));
-        	sniffDetails[std::get<0>(pkt)] = std::get<1>(pkt);
-        }
-    }
 }
 
 struct tcphdr* Scan::recvPacket(uint16_t dstPort) {
 	std::chrono::time_point<std::chrono::high_resolution_clock> beg_ = std::chrono::high_resolution_clock::now();
 
-	// loop until timeout
-	while(std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::high_resolution_clock::now() - beg_).count() <= Scan::timeout) {
-		if (sniffDetails.find(dstPort) != sniffDetails.end()) {
-			return sniffDetails[dstPort];
+	// check presence of packet until timeout
+	while(std::chrono::duration_cast<std::chrono::microseconds> (std::chrono::high_resolution_clock::now() - beg_).count() <= Scan::timeout) {
+		if (sniffer.sniffDetails.find(dstPort) != sniffer.sniffDetails.end()) {
+			return sniffer.sniffDetails[dstPort];
 		}
 	}
 	return NULL;
@@ -228,7 +157,8 @@ struct tcphdr* Scan::recvPacket(uint16_t dstPort) {
 
 void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string type = "SYN") {
 
-	std::thread snifferThread(&Scan::sniff, this, dstIP);	//starting a thread to start sniffing IP packets
+	initialize();
+	std::thread snifferThread(&Sniff::sniff, this->sniffer, dstIP);		//starting a thread to start sniffing IP packets
 
 	// port range 
 	uint16_t startPort = 5430; 	//not doing 0
@@ -245,6 +175,6 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
 		th.join();
 	}
 	snifferThread.join();
-	objectiveAchieved = true;
+	sniffer.objectiveAchieved = true;
 	threads.clear();
 }

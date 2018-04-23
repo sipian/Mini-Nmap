@@ -1,5 +1,6 @@
 #include <time.h>
 #include <stdlib.h>
+#include "sniff.h"
 #include "scan.h"
 #include "ping.h"
 #include "logger.h"
@@ -13,7 +14,9 @@ int main() {
 	Discover::noOfAttempts = 1;
 	Scan::noOfThreads = 1;
 	Scan::noOfAttempts = 5;
-	Scan::timeout = 10; 	//milliseconds
+	Scan::timeout = 1e6; 	//microseconds
+
+	Scan::packetSize = 500;
 
 	/* test ping  */
 
@@ -25,7 +28,6 @@ int main() {
 
 	Scan trial;
 	for(auto& i : active_IPs) {
-		trial.initialize();
 		trial.scan(ping.get_my_IP_address(), i, "SYN");
 	}
 

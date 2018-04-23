@@ -40,20 +40,20 @@ CFLAGS := -std=c++14
 # C++ flags
 CXXFLAGS := -std=c++14
 # C/C++ flags
-CPPFLAGS := -O3 -Wall -Wextra -lpcap -I include 
+CPPFLAGS := -g -O3 -Wall -Wextra -I include
 # C++ thread flags
-THREADFLAGS := -pthread
+THREADFLAGS := -lpcap -pthread  
 # linker flags
 LDFLAGS :=
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
 # compile C source files
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(THREADFLAGS)
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@
 # compile C++ source files
-COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $(THREADFLAGS)
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@
 # link object files to binary
-LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@ $(THREADFLAGS)
+LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) -o $@ 
 # precompile step
 PRECOMPILE =
 # postcompile step
@@ -73,7 +73,7 @@ help:
 	@echo available targets: all dist clean
 
 $(BIN): $(OBJS)
-	$(LINK.o) $^
+	$(LINK.o) $^ $(THREADFLAGS)
 
 $(OBJDIR)/%.o: %.c
 $(OBJDIR)/%.o: %.c $(DEPDIR)/%.d

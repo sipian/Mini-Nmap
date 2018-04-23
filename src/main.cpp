@@ -1,22 +1,22 @@
 #include <time.h>
 #include <stdlib.h>
-#include "sniff.h"
+
 #include "scan.h"
-#include "ping.h"
-#include "logger.h"
 #include "discover.h"
 
 int main() {
 	srand(time(NULL));
+
 	Ping::timeout = 1e3; 	//microseconds
 	Ping::interface = "enp7s0";
 	Logger::logLevel = Logger::DEBUG;
 	Discover::noOfAttempts = 1;
+
 	Scan::noOfThreads = 1;
 	Scan::noOfAttempts = 5;
 	Scan::timeout = 1e6; 	//microseconds
 
-	Scan::packetSize = 500;
+	Sniff::packetSize = 500;
 
 	/* test ping  */
 

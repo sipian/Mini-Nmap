@@ -4,11 +4,13 @@
 #include "error.h"
 #include "logger.h"
 
+
 #include <map>
-#include<netinet/tcp.h>
-#include<netinet/ip.h>
-#include<sys/socket.h>
-#include<arpa/inet.h>
+#include <unistd.h>
+#include <linux/tcp.h>
+#include <netinet/ip.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 class Sniff {
     /*!

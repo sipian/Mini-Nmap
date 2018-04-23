@@ -30,11 +30,8 @@ public:
 			RESOURCE_BUSY,
 			NO_FREE_PORT,
 			UNABLE_TO_GET_SOCKET_DETAILS,
-			INVALID_PORT,
-			UNABLE_TO_SNIFF,
-			INVALID_FILTER,
-			OTHER_PACKET
-	};
+			INVALID_PORT
+		};
 	
 	/*!
 	 * \brief get string form of errno

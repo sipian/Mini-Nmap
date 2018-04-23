@@ -19,11 +19,11 @@ void Sniff::process_packet(const u_char *packet, const std::string &targetIP) {
     const struct iphdr *ip_header = (struct iphdr*)packet;
 
     if (ip_header->protocol == 6) { 	// only accept TCP packets
-    	if (ip_header->saddr == inet_addr(targetIP.c_str())) { 	// only accept packets from targetIP
+    	if (ip_header->saddr == inet_addr(targetIP.c_str())) { 	// only accept TCP packets from targetIP
 		    unsigned short ip_header_length = ip_header->ihl*4;
 		    struct tcphdr* tcp_header = (struct tcphdr *)(packet + ip_header_length);
 		    uint16_t srcPort = ntohs(tcp_header->source);
-		    log.info("Sniffed TCP packet from " + targetIP + ":" + std::to_string(srcPort));
+		    log.info("Sniff::process_packet => Sniffed TCP packet from " + targetIP + ":" + std::to_string(srcPort));
 		    sniffDetails[srcPort] = tcp_header;
     	}
     }
@@ -45,5 +45,7 @@ void Sniff::sniff(const std::string &targetIP) {
         }
         process_packet(buffer, targetIP);
     }
+    close(sockfd);
+    delete[] buffer;
 }
 

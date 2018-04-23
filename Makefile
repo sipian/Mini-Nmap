@@ -12,9 +12,9 @@ DISTFILES := $(BIN)
 DISTOUTPUT := $(BIN).tar.gz
 
 # intermediate directory for generated object files
-OBJDIR := build/.o
+OBJDIR := build/o
 # intermediate directory for generated dependency files
-DEPDIR := build/.d
+DEPDIR := build/d
 
 # object files, auto generated from source files
 OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
@@ -42,7 +42,7 @@ CXXFLAGS := -std=c++14
 # C/C++ flags
 CPPFLAGS := -g -O3 -Wall -Wextra -I include
 # C++ thread flags
-THREADFLAGS := -lpcap -pthread  
+THREADFLAGS := -pthread  
 # linker flags
 LDFLAGS :=
 # flags required for dependency generation; passed to compilers

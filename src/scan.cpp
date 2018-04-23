@@ -99,7 +99,6 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
 	    		unknown_Ports.push_back(tmp->port);
 	    		delete tmp;
 	    	}
-	    	continue;
 	    }
 	    else {
 	    	tmp->trial = 0;
@@ -120,10 +119,16 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
 
 void Scan::finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports) {
 	lock.lock();
+	
 	openPorts.insert(openPorts.begin(), open_Ports.begin(), open_Ports.end());
 	closedPorts.insert(openPorts.begin(), closed_Ports.begin(), closed_Ports.end());
-	unknownPorts.insert(openPorts.begin(), unknown_Ports.begin(), unknown_Ports.end());	
+	unknownPorts.insert(openPorts.begin(), unknown_Ports.begin(), unknown_Ports.end());
+	
 	lock.unlock();
+	
+	open_Ports.clear();
+	closed_Ports.clear();
+	unknown_Ports.clear();
 }
 
 void Scan::initialize() {
@@ -174,7 +179,7 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
 	for (auto &th : threads) {
 		th.join();
 	}
-	snifferThread.join();
 	sniffer.objectiveAchieved = true;
+	snifferThread.join();
 	threads.clear();
 }

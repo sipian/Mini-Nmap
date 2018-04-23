@@ -78,6 +78,7 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 			if (ping.ping_reply(sockfd).compare(tmp->IP) == 0) {
 				active_IPs.push_back(tmp->IP);
 				tmp->trial = 0;
+				delete tmp;
 			}
 		} catch (const Error::error &e) {
 			// did not ping
@@ -88,6 +89,9 @@ std::vector<std::string> Discover::discover_host(std::queue <Discover::request*>
 		if (tmp->trial > 0) {
 			roundRobin.push(tmp);
 			tmp->sequenceNo++;
+		}
+		else {
+			delete tmp;
 		}
 	}
 	if (active_IPs.size() == 0) {

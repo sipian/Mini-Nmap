@@ -106,8 +106,11 @@ unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct t
     memcpy(pseudo_packet + sizeof(struct pseudoTCPPacket), tcpHdr, sizeof(struct tcphdr));
     
     //Set the TCP header's checksum field
-    return (calcsum((unsigned short *) pseudo_packet, (int) (sizeof(struct pseudoTCPPacket) + 
+    unsigned short chksum = (calcsum((unsigned short *) pseudo_packet, (int) (sizeof(struct pseudoTCPPacket) + 
           sizeof(struct tcphdr))));
+
+    delete[] pseudo_packet;
+    return chksum;
 }
 
 void Packet::populateTCPheader(struct tcphdr *tcpHdr, int srcPort) {

@@ -114,6 +114,7 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
     }
     close(receiver_sockfd);
     close(sender_sockfd);
+    delete[] packet;
     finishTask(open_Ports, closed_Ports, unknown_Ports);
 }
 

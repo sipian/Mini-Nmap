@@ -3,10 +3,7 @@
 int Discover::noOfAttempts;
 
 bool Discover::is_valid_CIDR(const std::string &IP) {
-	if (std::regex_match (IP, std::regex("^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$"))) {
-	  	return true;
-	  }
-	  return false;
+    return std::regex_match (IP, std::regex("^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$"));
 }
 
 std::tuple<std::string, int> Discover::split_CIDR(const std::string &IP) {
@@ -19,27 +16,36 @@ std::string Discover::get_IP_from_int(unsigned long int a) {
 	std::string IP = "";
 	for (int i = 0; i < 4; ++i)
 	{
-		IP = "." + std::to_string(a & 0xFF) + IP;
-		a = a >> 8; 
+		IP = std::to_string(a & 0xFF) + IP;
+		a = a >> 8;
+        if (i < 3) {
+            IP += ".";
+        }
 	}
-	return IP.substr(1);
+	return IP;
+}
+
+unsigned long int Discover::get_int_from_IP(std::string IP) {
+    unsigned long int val = 0;
+    size_t pos = 0;
+    int count = 3;
+    std::string token;
+    while ((pos = IP.find(".")) != std::string::npos) {
+        int token = std::stoi(IP.substr(0, pos));
+        val += (token << (8 * count));
+        count--;
+        IP.erase(0, pos + 1);
+    }
+    return val;
 }
 
 std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmask) {
 	std::queue <request*> roundRobin;
-	size_t pos = 0;
-	unsigned long int IPRange = 0;
-	int count = 3;
 
 	// converting a.b.c.d into integer using bit manipulations for computation
 	std::string myIP = ping.get_my_IP_address();
 
-	while ((pos = IP.find(".")) != std::string::npos) {
-	    int token = stoi(IP.substr(0, pos));
-	    IPRange += (token << (8 * count));
-    	count--;
-    	IP.erase(0, pos + 1);
-    }
+	unsigned long int IPRange = get_int_from_IP(IP);
 
     unsigned long int bitmask = (unsigned long int)(pow(2,32 - netmask) * (pow(2,netmask) - 1));
 
@@ -48,7 +54,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 	for (unsigned long int i = 1; i < limit; ++i)
 	{
 		range++;
-		if(get_IP_from_int(range).compare(myIP) != 0) { 	//  do'nt include own IP address as request
+		if(get_IP_from_int(range).compare(myIP) != 0) { 	//  don't include own IP address as request
 			request* tmp = new (struct request);
 			tmp->IP = get_IP_from_int(range);
 			tmp->trial = Discover::noOfAttempts;
@@ -92,7 +98,7 @@ std::vector<std::string> Discover::discover_host(const std::string &CIDR) {
 		} catch (const Error::error &e) {
 			// did not ping
 			if (! (e == Error::UNABLE_TO_RECEIVE_ICMP || e == Error::UNABLE_TO_SEND_ICMP)) {
-				exit(EXIT_FAILURE); 	//exit if error something else other than send, recvfrom
+                throw e;  // throw the error if it is something other than an inability to send / receive
 			}
 		}
 		if (tmp->trial > 0) {
@@ -108,4 +114,3 @@ std::vector<std::string> Discover::discover_host(const std::string &CIDR) {
 	log.info("Discover::discover_host => " + std::to_string(active_IPs.size()) + " active IPs found in subnet");
 	return active_IPs;
 }
-

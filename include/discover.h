@@ -26,11 +26,18 @@ class Discover {
     Ping ping;
 
     /*!
-     * \brief transforms a int IP into a.b.c.d format
+     * \brief transforms an int IP into a.b.c.d format
      * \param IP in unsigned long int
-     * \return IP in a.b.c. notation
+     * \return IP in a.b.c.d notation
      */
 	std::string get_IP_from_int(unsigned long int a);
+
+    /*!
+     * \brief transforms an IP string into integer
+     * \param IP in a.b.c.d format
+     * \return IP as unsigned long int
+     */
+    unsigned long int get_int_from_IP(std::string IP);
 
     /*!
      * \brief validates a CIDR input using regex

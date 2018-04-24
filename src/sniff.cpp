@@ -26,7 +26,7 @@ int Sniff::open_socket() {
     return sockfd;
 }
 
-void Sniff::process_packet(const char *packet, const std::string &targetIP) {
+bool Sniff::process_packet(const char *packet, const std::string &targetIP) {
 
     struct iphdr *ip_header = (struct iphdr*)packet;
 
@@ -38,8 +38,10 @@ void Sniff::process_packet(const char *packet, const std::string &targetIP) {
 		    uint16_t srcPort = ntohs(tcp_header->source);
 		    log.info("Sniff::process_packet => Sniffed TCP packet from " + targetIP + ":" + std::to_string(srcPort));
 		    sniffDetails[srcPort] = tcp_header;
+            return true;
     	}
     }
+    return false;
 }
 
 void Sniff::sniff(const std::string &targetIP) {
@@ -53,7 +55,9 @@ void Sniff::sniff(const std::string &targetIP) {
             log.info("Sniff::sniff => recvfrom error -- " + Error::ErrStr());
         }
         else {
-            process_packet(buffer, targetIP);        
+            if (!process_packet(buffer, targetIP)) {
+                delete[] buffer;
+            }    
         }
     }
     close(sockfd);

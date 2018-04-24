@@ -10,18 +10,18 @@
 void initialize() {
 	srand(time(NULL));
 
-	Ping::timeout = 1e4; 	//microseconds
-	Ping::interface = "lo";
+	Ping::timeout = 1e4; 		//microseconds
+	Ping::interface = "enp7s0";
 	Logger::logLevel = Logger::DEBUG;
 	Discover::noOfAttempts = 2;
 
 	Scan::noOfThreads = 4;
 	Scan::noOfAttempts = 10;
-	Scan::timeout = 2e6; 	//microseconds
+	Scan::timeout = 1e5; 		//microseconds
 
 	Sniff::packetSize = 100;
-	Sniff::timeout_sec = 1;
-	Sniff::timeout_usec = 0;
+	Sniff::timeout_sec = 0;
+	Sniff::timeout_usec = 1e4; 	//microseconds
 }
 
 /*!

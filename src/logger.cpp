@@ -6,7 +6,7 @@ void Logger::error(const std::string &message) {
 	if (Logger::logLevel >= Logger::ERROR) {
 		Color::Modifier red(Color::FG_RED);
 	    Color::Modifier def(Color::FG_DEFAULT);
-	    std::cout << red << message << def << std::endl;		
+	    std::cout << red << message << def << std::endl;	
 	}
 }
 

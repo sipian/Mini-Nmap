@@ -10,16 +10,18 @@
 void initialize() {
 	srand(time(NULL));
 
-	Ping::timeout = 1e3; 	//microseconds
-	Ping::interface = "enp7s0";
+	Ping::timeout = 1e4; 	//microseconds
+	Ping::interface = "lo";
 	Logger::logLevel = Logger::DEBUG;
-	Discover::noOfAttempts = 1;
+	Discover::noOfAttempts = 2;
 
-	Scan::noOfThreads = 1;
-	Scan::noOfAttempts = 5;
-	Scan::timeout = 1e3; 	//microseconds
+	Scan::noOfThreads = 4;
+	Scan::noOfAttempts = 10;
+	Scan::timeout = 2e6; 	//microseconds
 
-	Sniff::packetSize = 500;
+	Sniff::packetSize = 100;
+	Sniff::timeout_sec = 1;
+	Sniff::timeout_usec = 0;
 }
 
 /*!
@@ -44,6 +46,7 @@ void scan(const std::string &CIDR, const std::string &type) {
 
 	for(auto& i : active_IPs) {
 		trial.scan(ping.get_my_IP_address(), i, type);
+		usleep(5e6);
 	}
 }
 

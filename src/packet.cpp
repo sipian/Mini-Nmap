@@ -157,13 +157,7 @@ char* Packet::create_packet(const std::string &sourceIP, const int srcPort, cons
     ipHdr->saddr = inet_addr(srcIP); // 32 bit format of source address
     ipHdr->daddr = inet_addr(dstIP); // 32 bit format of source address
     
-    ipHdr->check = calcsum((unsigned short *) packet, ipHdr->tot_len);
+    ipHdr->check = (calcsum((unsigned short *) packet, ipHdr->tot_len));
     populateTCPheader(tcpHdr, srcPort);
     return packet;
 }
-
-
-/*
-http://www.cse.scu.edu/~dclark/am_256_graph_theory/linux_2_6_stack/linux_2tcp_8h-source.html#l00027
-https://www.devdungeon.com/content/using-libpcap-c
-*/

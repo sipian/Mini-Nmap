@@ -12,7 +12,7 @@ void Logger::error(const std::string &message) {
 
 void Logger::warn(const std::string &message) {
     if (Logger::logLevel >= Logger::WARN) {
-        Color::Modifier FG_YELLOW(Color::FG_YELLOW);
+        Color::Modifier yellow(Color::FG_YELLOW);
         Color::Modifier def(Color::FG_DEFAULT);
         std::cout << yellow << message << def << std::endl;
     }

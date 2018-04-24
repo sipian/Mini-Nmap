@@ -16,7 +16,7 @@ std::string Discover::get_IP_from_int(unsigned long int a) {
 	std::string IP = "";
 	for (int i = 0; i < 4; ++i)
 	{
-		IP += std::to_string(a & 0xFF);
+		IP = std::to_string(a & 0xFF) + IP;
 		a = a >> 8;
         if (i < 3) {
             IP += ".";

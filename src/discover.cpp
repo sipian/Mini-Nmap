@@ -19,7 +19,7 @@ std::string Discover::get_IP_from_int(unsigned long int a) {
 		IP = std::to_string(a & 0xFF) + IP;
 		a = a >> 8;
         if (i < 3) {
-            IP += ".";
+            IP = "." + IP;
         }
 	}
 	return IP;
@@ -29,7 +29,6 @@ unsigned long int Discover::get_int_from_IP(std::string IP) {
     unsigned long int val = 0;
     size_t pos = 0;
     int count = 3;
-    std::string token;
     while ((pos = IP.find(".")) != std::string::npos) {
         int token = std::stoi(IP.substr(0, pos));
         val += (token << (8 * count));

@@ -28,15 +28,6 @@ class Packet {
     Ping ping;
 
     /*!
-     * \brief Calculates the checksum (as specified in rfc793)
-     * (Ref :: http:// www.binarytides.com/raw-sockets-c-code-on-linux/)
-     * \param ptr typecasted packet payload
-     * \param nbytes payload size
-     * \return calculated checksum
-     */
-    unsigned short calcsum(unsigned short *ptr,int nbytes);
-
-    /*!
      * \brief Pseudo header prepended to TCP header for TCP checksum
      * (Ref :: http://www.freesoft.org/CIE/Course/Section4/8.htm)
      */
@@ -63,6 +54,15 @@ class Packet {
 
 protected:
     int packetSize;
+
+    /*!
+     * \brief Calculates the checksum (as specified in rfc793)
+     * (Ref :: http:// www.binarytides.com/raw-sockets-c-code-on-linux/)
+     * \param ptr typecasted packet payload
+     * \param nbytes payload size
+     * \return calculated checksum
+     */
+    unsigned short calcsum(unsigned short *ptr,int nbytes);
 
     /*!
      * \brief Calculates the TCP checksum by prepending pseudoTCPPacket to TCP header and calling checksum

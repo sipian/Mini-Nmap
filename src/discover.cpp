@@ -91,6 +91,7 @@ std::vector<std::string> Discover::discover_host(const std::string &CIDR) {
 		try {
 			ping.ping_request(sockfd, tmp->IP, tmp->sequenceNo);
 			if (ping.ping_reply(sockfd).compare(tmp->IP) == 0) {
+				tmp->trial = 0;
 				active_IPs.push_back(tmp->IP);
 				delete tmp;
 			}

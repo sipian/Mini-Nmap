@@ -3,16 +3,13 @@
 
 #include "error.h"
 #include "logger.h"
+#include "packet.h"
 
 #include <map>
 #include <atomic>
 #include <unistd.h>
-#include <linux/tcp.h>
-#include <netinet/ip.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 
-class Sniff {
+class Sniff : public Packet {
     /*!
      * \brief logger object
      */
@@ -29,7 +26,7 @@ class Sniff {
      * \param packet packet payload obtained from sniffer
      * \param targetIP target host under scanning
      */
-	void process_packet(const u_char *packet, const std::string &targetIP);    
+	void process_packet(const char *packet, const std::string &targetIP);    
 public:
     /*!
      * keep in sniffing packets until objective is achieved
@@ -40,6 +37,16 @@ public:
      * \brief static variable to hold sniffer recvfrom packet size
      */
 	static int packetSize;
+
+    /*!
+     * \brief static variable to hold timeout in seconds for socket
+     */
+    static int timeout_sec;
+
+    /*!
+     * \brief static variable to hold timeout in microseconds for socket
+     */
+    static int timeout_usec;
 
     /*!
      * map to store port information obtained from sniffer

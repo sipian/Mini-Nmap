@@ -186,8 +186,8 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
 	std::thread snifferThread(&Sniff::sniff, &(this->sniffer), dstIP);		//starting a thread to start sniffing IP packets
 
 	// port range 
-	uint16_t startPort = 5430; 	//not doing 0
-	uint16_t endPort = 5435;
+	uint16_t startPort = 5400; 	//not doing 0
+	uint16_t endPort = 5500;
 	uint16_t binSize = (endPort - startPort)/noOfThreads;
 	log.info("Scan::scan => Starting port scan of " + dstIP);
 

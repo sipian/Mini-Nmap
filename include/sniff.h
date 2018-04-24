@@ -26,7 +26,7 @@ class Sniff : public Packet {
      * \param packet packet payload obtained from sniffer
      * \param targetIP target host under scanning
      */
-    void process_packet(const char *packet, const std::string &targetIP);
+    bool process_packet(const char *packet, const std::string &targetIP);    
 public:
     /*!
      * keep in sniffing packets until objective is achieved

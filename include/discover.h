@@ -12,13 +12,13 @@
 #include <stdlib.h>
 
 /*!
- * \brief Class for discvering active IPs in a subnet using ping messages 
+ * \brief Class for discvering active IPs in a subnet using ping messages
  */
 class Discover {
     /*!
      * \brief logger object
      */
-	Logger log;
+    Logger log;
 
     /*!
      * \brief ping object to perform ICMP scanning
@@ -30,7 +30,7 @@ class Discover {
      * \param IP in unsigned long int
      * \return IP in a.b.c.d notation
      */
-	std::string get_IP_from_int(unsigned long int a);
+    std::string get_IP_from_int(unsigned long int a);
 
     /*!
      * \brief transforms an IP string into integer
@@ -44,18 +44,18 @@ class Discover {
      * \param IP IP address in CIDR format
      * \return validation result
      */
-	bool is_valid_CIDR(const std::string &IP);
+    bool is_valid_CIDR(const std::string &IP);
 
     /*!
      * \brief split a CIDR expression into IP and netmask
      * \param IP IP address in CIDR format
      * \return tuple containing IP & netmask
-     */	
-	std::tuple<std::string, int> split_CIDR(const std::string &IP);
+     */
+    std::tuple<std::string, int> split_CIDR(const std::string &IP);
 
     /*!
      * \brief an element in the job queue, keeping track of unsuccessfull trials and sequence numbers
-     */ 
+     */
     typedef struct request {
         std::string IP;
         int trial;
@@ -67,7 +67,7 @@ class Discover {
      * \param IP IP address in a.b.c.d format
      * \param netmask subnet's netmask
      * \return queue of #request pointers
-     */ 
+     */
     std::queue <request*> handle_CIDR(std::string IP, int netmask);
 public:
 
@@ -80,8 +80,8 @@ public:
      * \brief In a round-robin manner discover active IP from queue found in handle_CIDR()
      * \param roundRobin queue of #request pointers
      * \return vector of active IPs
-     */		
-	std::vector<std::string> discover_host(const std::string &CIDR);
+     */
+    std::vector<std::string> discover_host(const std::string &CIDR);
 };
 
 #endif // DISCOVER_H

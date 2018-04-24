@@ -13,20 +13,20 @@ class Sniff : public Packet {
     /*!
      * \brief logger object
      */
-	Logger log;
+    Logger log;
 
     /*!
      * \brief Allocate a new RAW socket for sniffing
      * \return RAW socket identifier
      */
-	int open_socket();
+    int open_socket();
 
     /*!
      * obtain port number and TCP header from packet obtained by sniffer
      * \param packet packet payload obtained from sniffer
      * \param targetIP target host under scanning
      */
-	bool process_packet(const char *packet, const std::string &targetIP);    
+    bool process_packet(const char *packet, const std::string &targetIP);    
 public:
     /*!
      * keep in sniffing packets until objective is achieved
@@ -36,7 +36,7 @@ public:
     /*!
      * \brief static variable to hold sniffer recvfrom packet size
      */
-	static int packetSize;
+    static int packetSize;
 
     /*!
      * \brief static variable to hold timeout in seconds for socket
@@ -58,7 +58,7 @@ public:
      * \param RAW socket identifier
      * \param targetIP target host under scanning
      */
-	void sniff(const std::string &targetIP);
+    void sniff(const std::string &targetIP);
 };
 
 #endif // SNIFF_H

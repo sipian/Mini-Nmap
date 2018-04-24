@@ -1,7 +1,7 @@
 #include "packet.h"
 
 Packet::Packet() {
-    // important to not include any data 
+    // important to not include any data
     packetSize = sizeof(struct iphdr) + sizeof(struct tcphdr);
 }
 
@@ -34,7 +34,7 @@ std::tuple<int, int, int> Packet::open_socket() {
     int sender_sockfd = allocateSocket();
     int port;
 
-    // allocating a socket for receiving packets 
+    // allocating a socket for receiving packets
     int receiver_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -105,9 +105,9 @@ unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct t
 
     //Copy tcp header + data to fake TCP header for checksum
     memcpy(pseudo_packet + sizeof(struct pseudoTCPPacket), tcpHdr, sizeof(struct tcphdr));
-    
+
     //Set the TCP header's checksum field
-    unsigned short chksum = (calcsum((unsigned short *) pseudo_packet, (int) (sizeof(struct pseudoTCPPacket) + 
+    unsigned short chksum = (calcsum((unsigned short *) pseudo_packet, (int) (sizeof(struct pseudoTCPPacket) +
           sizeof(struct tcphdr))));
 
     delete[] pseudo_packet;
@@ -137,7 +137,7 @@ void Packet::populateTCPheader(struct tcphdr *tcpHdr, int srcPort) {
 char* Packet::create_packet(const std::string &sourceIP, const int srcPort, const std::string &destinationIP) {
     char* packet = new char[packetSize];
     const char* srcIP = sourceIP.c_str();
-    const char* dstIP = destinationIP.c_str(); 
+    const char* dstIP = destinationIP.c_str();
 
     memset(packet, 0, packetSize);
     // setting pointers to the different headers in the packet
@@ -146,7 +146,7 @@ char* Packet::create_packet(const std::string &sourceIP, const int srcPort, cons
     //no payload
 
     // Populate ip Header
-    ipHdr->ihl = 5;         // Internet IP Header Length = 5 x 32-bit words in the header :: minimum #words in IP header = 5 
+    ipHdr->ihl = 5;         // Internet IP Header Length = 5 x 32-bit words in the header :: minimum #words in IP header = 5
     ipHdr->version = 4;     // ipv4
     ipHdr->tos = 0;         // Type of Service = [0:5] DSCP + [5:7] Not used, low delay
     ipHdr->tot_len = sizeof(struct iphdr) + sizeof(struct tcphdr);        // total length of packet
@@ -157,7 +157,7 @@ char* Packet::create_packet(const std::string &sourceIP, const int srcPort, cons
     ipHdr->check = 0;                // 16 bit checksum of IP header.
     ipHdr->saddr = inet_addr(srcIP); // 32 bit format of source address
     ipHdr->daddr = inet_addr(dstIP); // 32 bit format of source address
-    
+
     ipHdr->check = (calcsum((unsigned short *) packet, ipHdr->tot_len));
     populateTCPheader(tcpHdr, srcPort);
     return packet;

@@ -6,11 +6,10 @@ int Sniff::timeout_sec;
 int Sniff::timeout_usec;
 
 int Sniff::open_socket() {
-     
     //Create a raw socket that will sniff
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if(sockfd < 0) {
-	    log.info("Sniff::open_socket => unable to open sniffer packet -- " + Error::ErrStr());
+        log.info("Sniff::open_socket => unable to open sniffer packet -- " + Error::ErrStr());
         throw Error::SOCKET_NOT_CREATED;
     }
 
@@ -33,22 +32,22 @@ bool Sniff::process_packet(const char *packet, const std::string &targetIP) {
     if (ip_header->protocol == 6) {     // only accept TCP packets
 
         if (ip_header->saddr == inet_addr(targetIP.c_str())) {  // only accept TCP packets from targetIP
-		    unsigned short ip_header_length = ip_header->ihl*4;
-		    struct tcphdr* tcp_header = (struct tcphdr *)(packet + ip_header_length);
-		    uint16_t srcPort = ntohs(tcp_header->source);
-		    log.info("Sniff::process_packet => Sniffed TCP packet from " + targetIP + ":" + std::to_string(srcPort));
-		    sniffDetails[srcPort] = tcp_header;
+            unsigned short ip_header_length = ip_header->ihl*4;
+            struct tcphdr* tcp_header = (struct tcphdr *)(packet + ip_header_length);
+            uint16_t srcPort = ntohs(tcp_header->source);
+            log.info("Sniff::process_packet => Sniffed TCP packet from " + targetIP + ":" + std::to_string(srcPort));
+            sniffDetails[srcPort] = tcp_header;
             return true;
-    	}
+        }
     }
     return false;
 }
 
 void Sniff::sniff(const std::string &targetIP) {
-	int sockfd = open_socket();
+    int sockfd = open_socket();
     struct sockaddr saddr;
     socklen_t saddr_size = sizeof(saddr);
-     
+
     while(!objectiveAchieved) {
         char* buffer = new char[Sniff::packetSize];
         if(recvfrom(sockfd, buffer, Sniff::packetSize, 0, &saddr, &saddr_size) < 0 ) {
@@ -61,5 +60,4 @@ void Sniff::sniff(const std::string &targetIP) {
         }
     }
     close(sockfd);
-    
 }

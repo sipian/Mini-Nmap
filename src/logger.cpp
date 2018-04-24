@@ -39,4 +39,3 @@ void Logger::result(const std::string &message) {
 	    Color::Modifier def(Color::FG_DEFAULT);
 	    std::cout << red << message << def << std::endl;
 }
-

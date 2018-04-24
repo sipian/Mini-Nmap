@@ -6,7 +6,7 @@ int Sniff::packetSize;
 int Sniff::open_socket() {
      
     //Create a raw socket that will sniff
-    int sockfd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if(sockfd < 0) {
 	    log.info("Sniff::open_socket => unable to open sniffer packet -- " + Error::ErrStr());
         throw Error::SOCKET_NOT_CREATED;
@@ -49,4 +49,3 @@ void Sniff::sniff(const std::string &targetIP) {
     close(sockfd);
     delete[] buffer;
 }
-

@@ -62,26 +62,27 @@ std::tuple<int, int, int> Packet::open_socket() {
 }
 
 unsigned short Packet::calcsum(unsigned short *ptr,int nbytes) {
-  long sum;
-  unsigned short oddbyte;
-  short answer;
+    long sum;
+    unsigned short oddbyte;
+    short answer;
 
-  sum=0;
-  while(nbytes>1) {
-    sum+=*ptr++;
-    nbytes-=2;
-  }
-  if(nbytes==1) {
-    oddbyte=0;
-    *((u_char*)&oddbyte)=*(u_char*)ptr;
-    sum+=oddbyte;
-  }
+    sum = 0;
+    while (nbytes > 1) {
+        sum += *ptr++;
+        nbytes -= 2;
+    }
 
-  sum = (sum>>16)+(sum & 0xffff);
-  sum = sum + (sum>>16);
-  answer=(short)~sum;
+    if (nbytes == 1) {
+        oddbyte = 0;
+        *((u_char*)&oddbyte) = *(u_char*)ptr;
+        sum += oddbyte;
+    }
 
-  return(answer);
+    sum = (sum >> 16) + (sum & 0xffff);
+    sum = sum + (sum >> 16);
+    answer = (short)~sum;
+
+    return answer;
 }
 
 unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct tcphdr *tcpHdr) {

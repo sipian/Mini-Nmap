@@ -12,30 +12,30 @@ void Logger::error(const std::string &message) {
 
 void Logger::warn(const std::string &message) {
     if (Logger::logLevel >= Logger::WARN) {
-        Color::Modifier red(Color::FG_YELLOW);
+        Color::Modifier FG_YELLOW(Color::FG_YELLOW);
         Color::Modifier def(Color::FG_DEFAULT);
-        std::cout << red << message << def << std::endl;
+        std::cout << yellow << message << def << std::endl;
     }
 }
 
 void Logger::info(const std::string &message) {
     if (Logger::logLevel >= Logger::INFO) {
-        Color::Modifier red(Color::FG_GREEN);
+        Color::Modifier green(Color::FG_GREEN);
         Color::Modifier def(Color::FG_DEFAULT);
-        std::cout << red << message << def << std::endl;
+        std::cout << green << message << def << std::endl;
     }
 }
 
 void Logger::debug(const std::string &message) {
     if (Logger::logLevel >= Logger::DEBUG) {
-        Color::Modifier red(Color::FG_BLUE);
+        Color::Modifier blue(Color::FG_BLUE);
         Color::Modifier def(Color::FG_DEFAULT);
-        std::cout << red << message << def << std::endl;
+        std::cout << blue << message << def << std::endl;
     }
 }
 
 void Logger::result(const std::string &message) {
-        Color::Modifier red(Color::FG_CYAN);
+        Color::Modifier cyan(Color::FG_CYAN);
         Color::Modifier def(Color::FG_DEFAULT);
-        std::cout << red << message << def << std::endl;
+        std::cout << cyan << message << def << std::endl;
 }

@@ -52,6 +52,6 @@ void scan(const std::string &CIDR, const std::string &type) {
 
 int main() {
 	initialize();
-	scan("127.0.0.1/30", "SYN");	
+	scan("127.0.0.16.8/30", "SYN");	
     return 0;
 }

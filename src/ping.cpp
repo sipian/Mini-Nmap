@@ -28,7 +28,7 @@ int Ping::open_icmp_socket() {
 
     /* Confirm that ICMP is available on this machine */
     if (! proto) {
-        
+
         log.error("Ping::open_ping_socket => ICMP not a known protocol");
         throw Error::ICMP_UNKNOWN;
     }
@@ -92,13 +92,13 @@ void Ping::set_src_addr(int sockfd, const std::string &IP) {
     }
 
     struct sockaddr_in addr;
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr(IP.c_str());
-	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log.error("Ping::set_src_addr => Error in binding socket to source IP");
-		throw Error::SOCKET_NOT_BOUND;
-	}
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(IP.c_str());
+    if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        log.error("Ping::set_src_addr => Error in binding socket to source IP");
+        throw Error::SOCKET_NOT_BOUND;
+    }
 }
 
 

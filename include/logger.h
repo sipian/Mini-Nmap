@@ -36,7 +36,7 @@ class Logger {
 public:
     /*!
      * \brief enum of various log levels
-     */ 
+     */
     enum logLevelNames{ERROR, WARN, INFO, DEBUG};
 
     /*!

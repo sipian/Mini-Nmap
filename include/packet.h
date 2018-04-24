@@ -49,7 +49,7 @@ class Packet {
     /*!
      * \brief Allocate a new RAW socket for sending => set IP_HDRINCL, SO_REUSEADDR options to it
      * \return sender socket identifier
-     */    
+     */
     int allocateSocket();
 
 protected:
@@ -71,16 +71,16 @@ protected:
      * \param dstIP destination IP address
      * \param tcpHdr TCP header of the packet
      * \return calculated TCP checksum
-     */    
+     */
     unsigned short calcsumTCP(const char* srcIP, const char* dstIP, struct tcphdr *tcpHdr);
-    
+
 public:
     Packet();
 
     /*!
      * \brief Allocate a new RAW socket for sending => set IP_HDRINCL, SO_REUSEADDR options to it
      * \return sender socket identifier, receiver socket identitfier , receiver port
-     */    
+     */
     std::tuple<int, int, int> open_socket();
 
     char* create_packet(const std::string &sourceIP, int srcPort, const std::string &destinationIP);

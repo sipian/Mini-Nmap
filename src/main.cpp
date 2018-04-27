@@ -15,9 +15,11 @@ void initialize() {
 	Logger::logLevel = Logger::DEBUG;
 	Discover::noOfAttempts = 2;
 
-	Scan::noOfThreads = 4;
-	Scan::noOfAttempts = 10;
-	Scan::timeout = 1e5; 		//microseconds
+	Scan::startPort = 5430;
+	Scan::endPort = 5435; 	//exclusive
+	Scan::noOfThreads = 1;
+	Scan::noOfAttempts = 5;
+	Scan::timeout = 1e4; 		//microseconds
 
 	Sniff::packetSize = 100;
 	Sniff::timeout_sec = 0;
@@ -52,6 +54,6 @@ void scan(const std::string &CIDR, const std::string &type) {
 
 int main() {
 	initialize();
-	scan("127.0.0.16.8/30", "SYN");	
+	scan("127.0.0.1/30", "FIN");	
     return 0;
 }

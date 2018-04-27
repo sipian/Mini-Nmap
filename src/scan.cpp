@@ -3,25 +3,51 @@
 int Scan::noOfThreads;
 int Scan::noOfAttempts;
 int Scan::timeout;
+uint16_t Scan::startPort;     //not doing 0
+uint16_t Scan::endPort;
 
 void Scan::setTCPHeader(struct tcphdr *tcpHdr, std::string type) {
     if (type.compare("SYN") == 0) {
         tcpHdr->syn = 1;    // setting SYN bit to 1
     }
+
+    else if (type.compare("FIN") == 0) {
+        tcpHdr->fin = 1;    // setting FIN bit to 1
+    }
+
+    else if (type.compare("RST") == 0) {
+        tcpHdr->rst = 1;    // setting FIN bit to 1
+    }
+
+    else if (type.compare("XMAS") == 0) {
+        tcpHdr->fin = 1;    // setting FIN bit to 1
+        tcpHdr->psh = 1;    // setting PSH bit to 1
+        tcpHdr->urg = 1;    // setting URG bit to 1
+    }
 }
 
 Scan::scanResult Scan::checkTCPHeader(struct tcphdr *tcpHdr, std::string type) {
     if (type.compare("SYN") == 0) {
-        if(tcpHdr->rst == 1) {
+        if (tcpHdr->rst == 1) {
             return CLOSED;
         }
-        else if(tcpHdr->syn == 1 && tcpHdr->ack == 1){
+        else if (tcpHdr->syn == 1 && tcpHdr->ack == 1) {
             return OPEN;
         }
         else {
             return UNKNOWN;
         }
     }
+
+    else if (type == "FIN" || type == "XMAS" || type == "NULL") {
+        if (tcpHdr->rst == 1) {
+            return CLOSED;
+        }
+        else {
+            return UNKNOWN;
+        }
+    }
+
     return UNKNOWN;
 }
 
@@ -60,8 +86,9 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
     std::vector<uint16_t> closed_Ports;
     std::vector<uint16_t> unknown_Ports;
 
-    while(!listOfPorts.empty()) {
+    while (!listOfPorts.empty()) {
         query* tmp = listOfPorts.front();
+
         listOfPorts.pop();
 
         tmp->trial--;
@@ -73,8 +100,11 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
         tcpHdr->check = calcsumTCP(srcIP.c_str(), dstIP, tcpHdr);
         log.debug("Scan::scanPerThread => Scanning port " + std::to_string(tmp->port));
 
+        if (tmp->port == 80) {
+            log.error("HERE");
+        }
         // send TCP packet
-        if(sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in)) < 0) {
+        if (sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in)) < 0) {
             log.info("Scan::scanPerThread => unable to sendto TCP SYN packet to " + destinationIP + ":" + std::to_string(tmp->port) + " -- " + Error::ErrStr());
             // check if trials left
             if (tmp->trial > 0) {
@@ -96,7 +126,12 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
                 listOfPorts.push(tmp);
             }
             else {
-                unknown_Ports.push_back(tmp->port);
+                if (type == "FIN" || type == "XMAS" || type == "NULL" ) {
+                    open_Ports.push_back(tmp->port);    //these scans return no answer for open port
+                }
+                else {
+                    unknown_Ports.push_back(tmp->port);
+                }
                 delete tmp;
             }
         }
@@ -104,10 +139,10 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
             tmp->trial = 0;
             scanResult status = checkTCPHeader(ptrToTCPHeader, type);
             // adding result
-            switch(status) {
-                case OPEN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is open"); open_Ports.push_back(tmp->port); break;
-                case CLOSED: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is closed"); closed_Ports.push_back(tmp->port); break;
-                case UNKNOWN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is unknown"); unknown_Ports.push_back(tmp->port); break;
+            switch (status) {
+            case OPEN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is open"); open_Ports.push_back(tmp->port); break;
+            case CLOSED: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is closed"); closed_Ports.push_back(tmp->port); break;
+            case UNKNOWN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is unknown"); unknown_Ports.push_back(tmp->port); break;
             }
             delete tmp;
         }
@@ -153,7 +188,7 @@ struct tcphdr* Scan::recvPacket(uint16_t dstPort) {
     std::chrono::time_point<std::chrono::high_resolution_clock> beg_ = std::chrono::high_resolution_clock::now();
 
     // check presence of packet until timeout
-    while(std::chrono::duration_cast<std::chrono::microseconds> (std::chrono::high_resolution_clock::now() - beg_).count() <= Scan::timeout) {
+    while (std::chrono::duration_cast<std::chrono::microseconds> (std::chrono::high_resolution_clock::now() - beg_).count() <= Scan::timeout) {
         if (sniffer.sniffDetails.find(dstPort) != sniffer.sniffDetails.end()) {
             return sniffer.sniffDetails[dstPort];
         }
@@ -167,12 +202,12 @@ void Scan::print(const std::string &dstIP, int duration) {
     log.result("\t\tNot shown: " + std::to_string(closedPorts.size()) + " closed ports");
     log.result("\t\t" + std::to_string(openPorts.size()) + " open ports");
     std::sort(openPorts.begin(), openPorts.end());
-    for(auto &i : openPorts) {
+    for (auto &i : openPorts) {
         log.result("\t\t\t" + std::to_string(i));
     }
     log.result("\t\t" + std::to_string(unknownPorts.size()) + " filtered/unknown ports");
     std::sort(unknownPorts.begin(), unknownPorts.end());
-    for(auto &i : unknownPorts) {
+    for (auto &i : unknownPorts) {
         log.result("\t\t\t" + std::to_string(i));
     }
 
@@ -186,13 +221,13 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
     std::thread snifferThread(&Sniff::sniff, &(this->sniffer), dstIP);        //starting a thread to start sniffing IP packets
 
     // port range
-    uint16_t startPort = 5400;     //not doing 0
-    uint16_t endPort = 5500;
-    uint16_t binSize = (endPort - startPort)/noOfThreads;
+    uint16_t startPort = Scan::startPort;
+    uint16_t endPort = Scan::endPort;
+    uint16_t binSize = (endPort - startPort) / noOfThreads;
     log.info("Scan::scan => Starting port scan of " + dstIP);
 
     for (int i = 0; i < noOfThreads; ++i) {
-        uint16_t nextPort = (startPort + binSize > endPort)? endPort : startPort + binSize;
+        uint16_t nextPort = (startPort + binSize > endPort) ? endPort : startPort + binSize;
         threads.push_back(std::thread(&Scan::scanPerThread, this, srcIP, dstIP, startPort, nextPort, type));
         startPort += binSize;
     }

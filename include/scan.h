@@ -24,7 +24,7 @@ class Scan: public Packet {
     Logger log;
 
     /*!
-     * Sniffer to sniff port scan responses
+     * \brief Sniffer to sniff port scan responses
      */
     Sniff sniffer;
 
@@ -113,6 +113,17 @@ class Scan: public Packet {
     */
     void print(const std::string &dstIP, int duration);
 public:
+
+    /*!
+     * \brief static variable for starting port number of range in consideration
+     * (not doing 0)
+     */
+    static uint16_t startPort;
+    
+    /*!
+     * \brief static variable for ending port number of range in consideration
+     */
+    static uint16_t endPort;
 
     /*!
      * \brief static variable to hold maximum number of threads for speedup

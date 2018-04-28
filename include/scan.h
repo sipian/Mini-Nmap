@@ -34,6 +34,10 @@ class Scan: public Packet {
     std::mutex lock;
 
     /*!
+     * \brief vector to save active IPs in subnet 
+     */
+    std::vector<std::string> active_IPs;
+    /*!
      * \brief vector of threads for port-scanning
      */
     std::vector<std::thread> threads;
@@ -44,6 +48,19 @@ class Scan: public Packet {
     void initialize();
 
     /*!
+     * \brief function called to send packet to destination from all IP's in subnet
+     * \param sockfd socket id of sender
+     * \param packet char pointer to the IP payload
+     * \param addr destination address structure for socket
+     * \param port port under scan
+     * \param srcIP IP of source host for port-scanning
+     * \param dstIP IP of destination host for port-scanning
+     * \param CIDR vector of active_IPs + attacker_IP
+     * \return was sending from attacker IP successful or not 
+     */
+    bool decoyScan(int sockfd, char* packet, struct sockaddr *addr, int port, const std::string &srcIP, const std::string &dstIP, std::vector<std::string> &CIDR);
+
+    /*!
      * \brief function called per thread to scan for ports
      * This adds the classfied ports in global vectors
      * \param srcIP IP of source host for port-scanning
@@ -51,8 +68,9 @@ class Scan: public Packet {
      * \param startPort start port-scanning from this port
      * \param endPort end port-scanning at this port
      * \param type what kind of scan is to be performed
+     * \param isDecoy indicator variable for decoy scan
      */
-    void scanPerThread(const std::string &srcIP, const std::string &destinationIP, uint16_t startPort, uint16_t endPort, std::string type);
+    void scanPerThread(const std::string &srcIP, const std::string &destinationIP, uint16_t startPort, uint16_t endPort, const std::string &type, bool isDecoy);
 
     /*!
      * \brief enum of port status
@@ -83,7 +101,6 @@ class Scan: public Packet {
     typedef struct query {
         uint16_t port;
         int trial;
-        int seqNo;
     } query;
 
     /*!
@@ -159,6 +176,6 @@ public:
      * \param dstIP IP address of target host
      * \param type of port-scan to do
      */
-    void scan(const std::string &srcIP, const std::string &dstIP, std::string type);
+    void scan(const std::string &srcIP, const std::string &dstIP, std::vector<std::string> &active_IPs, std::string type);
 };
 #endif // SCAN_H

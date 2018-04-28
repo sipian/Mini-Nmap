@@ -68,7 +68,32 @@ Scan::scanResult Scan::checkTCPHeader(struct tcphdr *tcpHdr, std::string type) {
     return UNKNOWN;
 }
 
-void Scan::scanPerThread(const std::string &srcIP, const std::string &destinationIP, uint16_t startPort, uint16_t endPort, std::string type) {
+bool Scan::decoyScan(int sockfd, char* packet, struct sockaddr *addr, int port, const std::string &srcIP, const std::string &dstIP, std::vector<std::string> &CIDR) {
+
+    std::random_shuffle ( CIDR.begin(), CIDR.end() );       //add variability in the decoy scan
+    bool result = true;
+
+    for(const std::string& i : CIDR) {
+        struct iphdr *ipHdr = (struct iphdr *) packet;
+        ipHdr->saddr = inet_addr(i.c_str());
+        ipHdr->check = (calcsum((unsigned short *) packet, ipHdr->tot_len));
+
+        struct tcphdr *tcpHdr = (struct tcphdr *) (packet + sizeof(struct iphdr));
+        tcpHdr->seq = rand();
+        tcpHdr->check = calcsumTCP(i.c_str(), dstIP.c_str(), tcpHdr);
+
+        // send TCP packet
+        if (sendto(sockfd, packet, packetSize, 0, addr, sizeof(struct sockaddr)) < 0) {
+            log.error("Scan::scanPerThread => unable to sendto TCP SYN packet to " + dstIP + ":" + std::to_string(port) + " from " + i + "-- " + Error::ErrStr());
+            if(i == srcIP) {
+                result = false;
+            }
+        }
+    }
+    return result;
+}
+
+void Scan::scanPerThread(const std::string &srcIP, const std::string &destinationIP, uint16_t startPort, uint16_t endPort, const std::string &type, bool isDecoy) {
 
     // opening a new socket to send packets
     std::tuple<int, int, int> sockfd = open_socket();
@@ -96,35 +121,41 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
         query* tmp = new query;
         tmp->port = dstPort;
         tmp->trial = Scan::noOfAttempts;
-        tmp->seqNo = rand();
         listOfPorts.push(tmp);
     }
     std::vector<uint16_t> open_Ports;
     std::vector<uint16_t> closed_Ports;
     std::vector<uint16_t> unknown_Ports;
 
+    //vector for decoy scan
+    std::vector<std::string> CIDR(active_IPs);
+
     while (!listOfPorts.empty()) {
+
         query* tmp = listOfPorts.front();
+        bool sendSuccess = true;
 
         listOfPorts.pop();
 
         tmp->trial--;
         addr_in.sin_port = htons(tmp->port);
 
-        // set fields for creating SYN packet
+        // set fields for creating target IP packet
         tcpHdr->dest = htons(tmp->port);
-        tcpHdr->seq = tmp->seqNo;
+        tcpHdr->seq = rand();
         tcpHdr->check = calcsumTCP(srcIP.c_str(), dstIP, tcpHdr);
         log.debug("Scan::scanPerThread => Scanning port " + std::to_string(tmp->port));
 
-        if (tmp->port == 80) {
-            log.error("HERE");
+        if (isDecoy) {
+            sendSuccess = decoyScan(sender_sockfd, packet, (struct sockaddr *) &addr_in, tmp->port, srcIP, destinationIP, CIDR);
         }
-        // send TCP packet
-        if (sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in)) < 0) {
-            log.info("Scan::scanPerThread => unable to sendto TCP SYN packet to " + destinationIP + ":" + std::to_string(tmp->port) + " -- " + Error::ErrStr());
-            // check if trials left
-            if (tmp->trial > 0) {
+        else if (sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in)) < 0) {
+            log.error("Scan::scanPerThread => unable to sendto TCP SYN packet to " + destinationIP + ":" + std::to_string(tmp->port) + " -- " + Error::ErrStr());
+            sendSuccess = false;
+        }
+
+        if (! sendSuccess) {
+            if (tmp->trial > 0) {             // check if trials left
                 listOfPorts.push(tmp);
             }
             else {
@@ -137,7 +168,7 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
         // wait for TCP reply with timeout
         struct tcphdr *ptrToTCPHeader = recvPacket(tmp->port);
         if (ptrToTCPHeader == NULL) {
-            log.info("Scan::scanPerThread => unable to receive TCP SYN reply from " + destinationIP + ":" + std::to_string(tmp->port));
+            log.error("Scan::scanPerThread => unable to receive TCP SYN reply from " + destinationIP + ":" + std::to_string(tmp->port));
             // check if trials left
             if (tmp->trial > 0) {
                 listOfPorts.push(tmp);
@@ -240,7 +271,8 @@ void Scan::print(const std::string &dstIP, int duration) {
     log.result("\t\tPort-Scanning done in " + std::to_string(duration) + " seconds\n\n\n\n");
 }
 
-void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string type = "SYN") {
+void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::vector<std::string> &subnet_IPs, const std::string type = "SYN") {
+
     std::chrono::time_point<std::chrono::high_resolution_clock> begin = std::chrono::high_resolution_clock::now();
 
     initialize();
@@ -250,11 +282,22 @@ void Scan::scan(const std::string &srcIP, const std::string &dstIP, std::string 
     uint16_t startPort = Scan::startPort;
     uint16_t endPort = Scan::endPort;
     uint16_t binSize = (endPort - startPort) / noOfThreads;
+
+    // add active IPS for decoy scan 
+    active_IPs.insert (active_IPs.begin(), subnet_IPs.begin(), subnet_IPs.end());    
+    active_IPs.push_back(srcIP);
+
     log.info("Scan::scan => Starting port scan of " + dstIP);
+    std::string default_type = "SYN";
 
     for (int i = 0; i < noOfThreads; ++i) {
         uint16_t nextPort = (startPort + binSize > endPort) ? endPort : startPort + binSize;
-        threads.push_back(std::thread(&Scan::scanPerThread, this, srcIP, dstIP, startPort, nextPort, type));
+        if (type == "DECOY") {
+            threads.push_back(std::thread(&Scan::scanPerThread, this, srcIP, dstIP, startPort, nextPort, default_type, true));
+        }
+        else {
+           threads.push_back(std::thread(&Scan::scanPerThread, this, srcIP, dstIP, startPort, nextPort, type, false));            
+        }
         startPort += binSize;
     }
     for (int i = 0; i < noOfThreads; ++i) {

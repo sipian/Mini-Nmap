@@ -1,6 +1,6 @@
 {
 	"Ping::timeout" : 1e4,
-	"interface" : "enp7s0",
+	"interface" : "lo",
 
 	"logLevel" : "Logger::DEBUG",
 

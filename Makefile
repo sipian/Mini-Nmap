@@ -21,11 +21,6 @@ OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
 # dependency files, auto generated from source files
 DEPS := $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS)))
 
-# compilers (at least gcc and clang) don't create the subdirectories automatically
-$(shell mkdir -p bin >/dev/null)
-$(shell mkdir -p $(dir $(OBJS)) >/dev/null)
-$(shell mkdir -p $(dir $(DEPS)) >/dev/null)
-
 # C compiler
 CC := gcc
 # C++ compiler
@@ -64,15 +59,22 @@ all: $(BIN)
 dist: $(DISTFILES)
 	$(TAR) -cvzf $(DISTOUTPUT) $^
 
+docs:
+	@doxygen docs.cfg
+
 .PHONY: clean
 clean:
 	$(RM) -r $(OBJDIR) $(DEPDIR) $(BIN)
 
 .PHONY: help
 help:
-	@echo available targets: all dist clean
+	@echo available targets: all dist clean docs
 
 $(BIN): $(OBJS)
+	# compilers (at least gcc and clang) don't create the subdirectories automatically
+	$(shell mkdir -p bin >/dev/null)
+	$(shell mkdir -p $(dir $(OBJS)) >/dev/null)
+	$(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 	$(LINK.o) $^ $(THREADFLAGS)
 
 $(OBJDIR)/%.o: %.c

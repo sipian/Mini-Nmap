@@ -12,7 +12,11 @@ using json = nlohmann::json;
  */
 bool isTypeSupported(const char* type) {
 
-	return ((strcasecmp(type,"SYN")==0) || (strcasecmp(type,"FIN")==0) || (strcasecmp(type,"NULL")==0) || (strcasecmp(type,"XMAS")==0) || (strcasecmp(type,"DECOY")==0));
+	return (
+			(strcasecmp(type,"SYN")==0) || (strcasecmp(type,"FIN")==0) || 
+			(strcasecmp(type,"NULL")==0) || (strcasecmp(type,"XMAS")==0) || 
+			(strcasecmp(type,"DECOY")==0)
+			);
 }
 
 /*!
@@ -26,8 +30,6 @@ void initialize(const char* jsonFile) {
 	json j;
 	fin >> j;
 
-	srand(time(NULL));
-
 	std::map<std::string, Logger::logLevelNames> logLevels;
 	logLevels["Logger::ERROR"] = Logger::ERROR;
 	logLevels["Logger::WARN"] = Logger::WARN;
@@ -39,9 +41,13 @@ void initialize(const char* jsonFile) {
 		throw Error::INPUT_PARAMETER_MISSING;
 	} 
 
+	srand(time(NULL));
+
 	Ping::timeout = j["Ping::timeout"]; 				//microseconds
 	Ping::interface = j["interface"];
+
 	Logger::logLevel = logLevels[j["logLevel"]];
+
 	Discover::noOfAttempts = j["Discover::noOfAttempts"];
 
 	Scan::startPort = j["startPort"];
@@ -77,7 +83,7 @@ void scan(const std::string &CIDR, const std::string &type) {
 	Scan trial;
 
 	for(auto& i : active_IPs) {
-		trial.scan(ping.get_my_IP_address(), i, type);
+		trial.scan(ping.get_my_IP_address(), i, active_IPs, type);
 	}
 	log.result("************************************************************");
 }
@@ -86,13 +92,13 @@ int main(int argc, char const *argv[])
 {
 	Logger log;
 
-
-	initialize(argv[1]);
-
 	if (argc < 4) {
 		log.error("INPUT MISSING.\nUsage => ./bin/port-scanner <INPUT_FILE> <CIDR> <SYN | FIN | NULL | XMAS | DECOY>");
 		throw Error::INPUT_PARAMETER_MISSING;
 	}
+
+	initialize(argv[1]);
+
 	std::vector<std::string> scan_types;
 	for (int i = 3; i < argc; ++i)
 	{
@@ -102,7 +108,7 @@ int main(int argc, char const *argv[])
 			scan_types.push_back(tmp);
 		}
 		else {
-			log.error("INVALID SCAN TYPE.\nUsage => ./bin/port-scanner <CIDR> <SYN | FIN | NULL | XMAS | DECOY>");
+			log.error("INVALID SCAN TYPE.\nUsage => ./bin/port-scanner <INPUT_FILE> <CIDR> <SYN | FIN | NULL | XMAS | DECOY>");
 			throw Error::SCAN_NOT_SUPPORTED;	
 		}
 	}

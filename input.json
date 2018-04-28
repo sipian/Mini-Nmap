@@ -1,0 +1,18 @@
+{
+	"Ping::timeout" : 1e4,
+	"interface" : "enp7s0",
+
+	"logLevel" : "Logger::DEBUG",
+
+	"Discover::noOfAttempts" : 20,
+
+	"startPort" : 5430,
+	"endPort" : 5435,
+	"noOfThreads" : 1,
+	"Scan::noOfAttempts" : 5,
+	"Scan::timeout" : 1e4,
+
+	"packetSize" : 100,
+	"Sniff::timeout_sec" : 0,
+	"Sniff::timeout_usec" : 1e4
+}

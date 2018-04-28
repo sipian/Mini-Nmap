@@ -1,7 +1,10 @@
+#include "json.h"
+using json = nlohmann::json;
+
 #include "scan.h"
 #include "discover.h"
-
 #include <time.h>
+#include <fstream>
 #include <stdlib.h>
 
 /*!
@@ -15,23 +18,42 @@ bool isTypeSupported(const char* type) {
 /*!
  * \brief Initialize static variables and set seed for rand()
  */
-void initialize() {
+void initialize(const char* jsonFile) {
+
+	Logger log;
+	std::ifstream fin;
+	fin.open(jsonFile);
+	json j;
+	fin >> j;
+
 	srand(time(NULL));
 
-	Ping::timeout = 1e4; 		//microseconds
-	Ping::interface = "enp7s0";
-	Logger::logLevel = Logger::INFO;
-	Discover::noOfAttempts = 2;
+	std::map<std::string, Logger::logLevelNames> logLevels;
+	logLevels["Logger::ERROR"] = Logger::ERROR;
+	logLevels["Logger::WARN"] = Logger::WARN;
+	logLevels["Logger::INFO"] = Logger::INFO;
+	logLevels["Logger::DEBUG"] = Logger::DEBUG;
 
-	Scan::startPort = 5430;
-	Scan::endPort = 5435; 		//exclusive
-	Scan::noOfThreads = 1;
-	Scan::noOfAttempts = 5;
-	Scan::timeout = 1e4; 		//microseconds
+	if(logLevels.find(j["logLevel"]) == logLevels.end()) {
+		log.error("Incorrect log level specified");
+		throw Error::INPUT_PARAMETER_MISSING;
+	} 
 
-	Sniff::packetSize = 100;
-	Sniff::timeout_sec = 0;
-	Sniff::timeout_usec = 1e4; 	//microseconds
+	Ping::timeout = j["Ping::timeout"]; 				//microseconds
+	Ping::interface = j["interface"];
+	Logger::logLevel = logLevels[j["logLevel"]];
+	Discover::noOfAttempts = j["Discover::noOfAttempts"];
+
+	Scan::startPort = j["startPort"];
+	Scan::endPort = j["endPort"]; 						//exclusive
+	Scan::noOfThreads = j["noOfThreads"];
+	Scan::noOfAttempts = j["Scan::noOfAttempts"];
+	Scan::timeout = j["Scan::timeout"]; 				//microseconds
+
+	Sniff::packetSize = j["packetSize"];
+	Sniff::timeout_sec = j["Sniff::timeout_sec"];
+	Sniff::timeout_usec = j["Sniff::timeout_usec"]; 	//microseconds
+
 }
 
 /*!
@@ -64,13 +86,15 @@ int main(int argc, char const *argv[])
 {
 	Logger log;
 
-	initialize();
-	if (argc < 3) {
-		log.error("INPUT MISSING.\nUsage => ./bin/port-scanner <CIDR> <SYN | FIN | NULL | XMAS | DECOY>");
+
+	initialize(argv[1]);
+
+	if (argc < 4) {
+		log.error("INPUT MISSING.\nUsage => ./bin/port-scanner <INPUT_FILE> <CIDR> <SYN | FIN | NULL | XMAS | DECOY>");
 		throw Error::INPUT_PARAMETER_MISSING;
 	}
 	std::vector<std::string> scan_types;
-	for (int i = 2; i < argc; ++i)
+	for (int i = 3; i < argc; ++i)
 	{
 		if(isTypeSupported(argv[i])) {
 			std::string tmp = std::string(argv[i]);
@@ -83,7 +107,7 @@ int main(int argc, char const *argv[])
 		}
 	}
 	for(auto& i : scan_types) {
-		scan(argv[1], i);	
+		scan(argv[2], i);	
 	}
     return 0;
 }

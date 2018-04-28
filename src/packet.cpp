@@ -116,8 +116,8 @@ unsigned short Packet::calcsumTCP(const char* srcIP, const char* dstIP, struct t
 
 void Packet::populateTCPheader(struct tcphdr *tcpHdr, int srcPort) {
     tcpHdr->source = htons(srcPort);    // 16 bit in nbp format of source port
-    tcpHdr->dest = 0;      // 16 bit in nbp format of destination port
-    tcpHdr->seq = 0;           // 32 bit sequence number
+    tcpHdr->dest = 0;                   // 16 bit in nbp format of destination port
+    tcpHdr->seq = 0;                    // 32 bit sequence number
     tcpHdr->ack_seq = 0x0;              // 32 bit ack sequence number, depends whether ACK is set or not
     tcpHdr->doff = 5;                   // Data offset :: 4 bits: 5 x 32-bit words on tcp header
     tcpHdr->res1 = 0;                   // Reserved :: 4 bits: Not used
@@ -146,9 +146,9 @@ char* Packet::create_packet(const std::string &sourceIP, const int srcPort, cons
     //no payload
 
     // Populate ip Header
-    ipHdr->ihl = 5;         // Internet IP Header Length = 5 x 32-bit words in the header :: minimum #words in IP header = 5
-    ipHdr->version = 4;     // ipv4
-    ipHdr->tos = 0;         // Type of Service = [0:5] DSCP + [5:7] Not used, low delay
+    ipHdr->ihl = 5;                 // Internet IP Header Length = 5 x 32-bit words in the header :: minimum #words in IP header = 5
+    ipHdr->version = 4;             // ipv4
+    ipHdr->tos = 0;                 // Type of Service = [0:5] DSCP + [5:7] Not used, low delay
     ipHdr->tot_len = sizeof(struct iphdr) + sizeof(struct tcphdr);        // total length of packet
     ipHdr->id = htons(rand()%10000); // identifying the group of fragments :: 0x00; // 16 bit id
     ipHdr->frag_off = 0x00;          // Fragment Offset :: 16 bit field = [0:2] flags + [3:15] offset = 0x0

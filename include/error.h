@@ -31,7 +31,8 @@ public:
             NO_FREE_PORT,
             UNABLE_TO_GET_SOCKET_DETAILS,
             INVALID_PORT,
-            INVALID_CIDR
+            INVALID_CIDR,
+            SCAN_NOT_SUPPORTED
         };
     
     /*!

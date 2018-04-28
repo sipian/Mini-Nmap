@@ -8,21 +8,39 @@ uint16_t Scan::endPort;
 
 void Scan::setTCPHeader(struct tcphdr *tcpHdr, std::string type) {
     if (type.compare("SYN") == 0) {
-        tcpHdr->syn = 1;    // setting SYN bit to 1
+        tcpHdr->urg = 0;                   
+        tcpHdr->ack = 0;                    
+        tcpHdr->psh = 0;                  
+        tcpHdr->rst = 0;
+        tcpHdr->syn = 1;
+        tcpHdr->fin = 0;      
     }
 
     else if (type.compare("FIN") == 0) {
-        tcpHdr->fin = 1;    // setting FIN bit to 1
+        tcpHdr->urg = 0;                   
+        tcpHdr->ack = 0;                    
+        tcpHdr->psh = 0;                  
+        tcpHdr->rst = 0;
+        tcpHdr->syn = 0;
+        tcpHdr->fin = 1;  
     }
 
     else if (type.compare("RST") == 0) {
-        tcpHdr->rst = 1;    // setting FIN bit to 1
+        tcpHdr->urg = 0;                   
+        tcpHdr->ack = 0;                    
+        tcpHdr->psh = 0;                  
+        tcpHdr->rst = 1;
+        tcpHdr->syn = 0;
+        tcpHdr->fin = 0;  
     }
 
     else if (type.compare("XMAS") == 0) {
-        tcpHdr->fin = 1;    // setting FIN bit to 1
-        tcpHdr->psh = 1;    // setting PSH bit to 1
-        tcpHdr->urg = 1;    // setting URG bit to 1
+        tcpHdr->urg = 1;                   
+        tcpHdr->ack = 0;                    
+        tcpHdr->psh = 1;                  
+        tcpHdr->rst = 0;
+        tcpHdr->syn = 0;
+        tcpHdr->fin = 1;  
     }
 }
 
@@ -47,7 +65,6 @@ Scan::scanResult Scan::checkTCPHeader(struct tcphdr *tcpHdr, std::string type) {
             return UNKNOWN;
         }
     }
-
     return UNKNOWN;
 }
 
@@ -140,7 +157,16 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
             scanResult status = checkTCPHeader(ptrToTCPHeader, type);
             // adding result
             switch (status) {
-            case OPEN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is open"); open_Ports.push_back(tmp->port); break;
+            case OPEN: 
+                        log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is open"); 
+                        
+                        // // sending RST to prevent DOS
+                        // setTCPHeader(tcpHdr, "RST"); 
+                        // sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in));
+                        // setTCPHeader(tcpHdr, type); 
+                        
+                        open_Ports.push_back(tmp->port);
+                        break;
             case CLOSED: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is closed"); closed_Ports.push_back(tmp->port); break;
             case UNKNOWN: log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is unknown"); unknown_Ports.push_back(tmp->port); break;
             }

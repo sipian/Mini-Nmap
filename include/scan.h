@@ -113,7 +113,6 @@ class Scan: public Packet {
     */
     void print(const std::string &dstIP, int duration);
 public:
-
     /*!
      * \brief static variable for starting port number of range in consideration
      * (not doing 0)

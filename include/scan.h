@@ -173,8 +173,10 @@ public:
 
     /*!
      * \brief scan for port in a host
+     * \param srcIP IP address of source
      * \param dstIP IP address of target host
-     * \param type of port-scan to do
+     * \param active_IPs List of active IP to perform a scan on
+     * \param type Type of port-scan to do
      */
     void scan(const std::string &srcIP, const std::string &dstIP, std::vector<std::string> &active_IPs, std::string type);
 };

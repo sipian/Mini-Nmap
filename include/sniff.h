@@ -55,7 +55,6 @@ public:
 
     /*!
      * RAW socket sniffer
-     * \param RAW socket identifier
      * \param targetIP target host under scanning
      */
     void sniff(const std::string &targetIP);

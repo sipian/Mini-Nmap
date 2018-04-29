@@ -15,6 +15,8 @@ DISTOUTPUT := $(BIN).tar.gz
 OBJDIR := build/o
 # intermediate directory for generated dependency files
 DEPDIR := build/d
+# directory for documentation
+DOCSDIR := docs/
 
 # object files, auto generated from source files
 OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
@@ -60,11 +62,13 @@ dist: $(DISTFILES)
 	$(TAR) -cvzf $(DISTOUTPUT) $^
 
 docs:
+	@echo "Generating docs..."
 	@doxygen docs.cfg
 
 .PHONY: clean
 clean:
-	$(RM) -r $(OBJDIR) $(DEPDIR) $(BIN)
+	@echo "Cleaning project..."
+	@$(RM) -r $(OBJDIR) $(DEPDIR) $(BIN) $(DOCSDIR)
 
 .PHONY: help
 help:

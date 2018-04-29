@@ -78,7 +78,7 @@ public:
 
     /*!
      * \brief In a round-robin manner discover active IP from queue found in handle_CIDR()
-     * \param roundRobin queue of #request pointers
+     * \param CIDR IP address in CIDR format
      * \return vector of active IPs
      */
     std::vector<std::string> discover_host(const std::string &CIDR);

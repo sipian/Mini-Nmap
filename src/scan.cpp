@@ -191,7 +191,7 @@ void Scan::scanPerThread(const std::string &srcIP, const std::string &destinatio
             case OPEN: 
                         log.debug("Scan::scanPerThread => " + std::to_string(tmp->port) + " is open"); 
                         
-                        // // sending RST to prevent DOS
+                        // sending RST to prevent DOS
                         // setTCPHeader(tcpHdr, "RST"); 
                         // sendto(sender_sockfd, packet, packetSize, 0, (struct sockaddr *) &addr_in, sizeof(addr_in));
                         // setTCPHeader(tcpHdr, type); 

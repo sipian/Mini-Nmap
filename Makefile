@@ -23,6 +23,10 @@ OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
 # dependency files, auto generated from source files
 DEPS := $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS)))
 
+$(shell mkdir -p bin >/dev/null)
+$(shell mkdir -p $(dir $(OBJS)) >/dev/null)
+$(shell mkdir -p $(dir $(DEPS)) >/dev/null)
+
 # C compiler
 CC := gcc
 # C++ compiler
@@ -76,9 +80,6 @@ help:
 
 $(BIN): $(OBJS)
 	# compilers (at least gcc and clang) don't create the subdirectories automatically
-	$(shell mkdir -p bin >/dev/null)
-	$(shell mkdir -p $(dir $(OBJS)) >/dev/null)
-	$(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 	$(LINK.o) $^ $(THREADFLAGS)
 
 $(OBJDIR)/%.o: %.c

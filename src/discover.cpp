@@ -48,7 +48,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 
     unsigned long int bitmask = (unsigned long int)(pow(2,32 - netmask) * (pow(2,netmask) - 1));
 
-    unsigned long int range = IPRange & bitmask, limit = pow(2, 32 - netmask) - 1;
+    unsigned long int range = IPRange & bitmask, limit = pow(2, 32 - netmask);
 
     for (unsigned long int i = 1; i < limit; ++i)
     {

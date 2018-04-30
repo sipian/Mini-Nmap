@@ -64,7 +64,7 @@ class Scan: public Packet {
      * \brief function called per thread to scan for ports
      * This adds the classfied ports in global vectors
      * \param srcIP IP of source host for port-scanning
-     * \param dstIP IP of destination host for port-scanning
+     * \param destinationIP IP of destination host for port-scanning
      * \param startPort start port-scanning from this port
      * \param endPort end port-scanning at this port
      * \param type what kind of scan is to be performed
@@ -120,7 +120,7 @@ class Scan: public Packet {
 
     /*!
      * start pcap sniffer to
-     * \param dstPort port under scanning
+     * \param targetIP IP under scanning
      * \return link to TCP header
      */
     void sniff(const std::string &targetIP);

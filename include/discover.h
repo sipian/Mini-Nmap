@@ -27,7 +27,7 @@ class Discover {
 
     /*!
      * \brief transforms an int IP into a.b.c.d format
-     * \param IP in unsigned long int
+     * \param a IP in unsigned long int
      * \return IP in a.b.c.d notation
      */
     std::string get_IP_from_int(unsigned long int a);

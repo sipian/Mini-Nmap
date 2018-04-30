@@ -50,7 +50,7 @@ std::queue <Discover::request*> Discover::handle_CIDR(std::string IP, int netmas
 
     unsigned long int range = IPRange & bitmask, limit = pow(2, 32 - netmask);
 
-    for (unsigned long int i = 1; i < limit; ++i)
+    for (unsigned long int i = 1; i <= limit; ++i)
     {
         range++;
         if(get_IP_from_int(range).compare(myIP) != 0) {     //  don't include own IP address as request

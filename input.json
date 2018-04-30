@@ -1,8 +1,8 @@
 {
 	"Ping::timeout" : 1e4,
-	"interface" : "lo",
+	"interface" : "wlp6s0",
 
-	"logLevel" : "Logger::DEBUG",
+	"logLevel" : "Logger::INFO",
 
 	"Discover::noOfAttempts" : 20,
 

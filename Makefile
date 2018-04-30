@@ -41,7 +41,7 @@ CFLAGS := -std=c++14
 # C++ flags
 CXXFLAGS := -std=c++14
 # C/C++ flags
-CPPFLAGS := -g -O3 -Wall -Wextra -I include
+CPPFLAGS := -O3 -Wall -Wextra -I include
 # C++ thread flags
 THREADFLAGS := -pthread  
 # linker flags

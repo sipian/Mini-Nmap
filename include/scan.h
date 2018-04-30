@@ -119,13 +119,6 @@ class Scan: public Packet {
     struct tcphdr* recvPacket(uint16_t dstPort);
 
     /*!
-     * start pcap sniffer to
-     * \param dstPort port under scanning
-     * \return link to TCP header
-     */
-    void sniff(const std::string &targetIP);
-
-    /*!
      * Print port scan results
     */
     void print(const std::string &dstIP, int duration);

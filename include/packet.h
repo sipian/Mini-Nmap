@@ -29,7 +29,6 @@ class Packet {
 
     /*!
      * \brief Pseudo header prepended to TCP header for TCP checksum
-     * (Ref :: http://www.freesoft.org/CIE/Course/Section4/8.htm)
      */
     struct pseudoTCPPacket {
         uint32_t srcAddr;
@@ -57,7 +56,6 @@ protected:
 
     /*!
      * \brief Calculates the checksum (as specified in rfc793)
-     * (Ref :: http:// www.binarytides.com/raw-sockets-c-code-on-linux/)
      * \param ptr typecasted packet payload
      * \param nbytes payload size
      * \return calculated checksum
@@ -66,7 +64,6 @@ protected:
 
     /*!
      * \brief Calculates the TCP checksum by prepending pseudoTCPPacket to TCP header and calling checksum
-     * (Ref :: http://www.freesoft.org/CIE/Course/Section4/8.htm)
      * \param srcIP source IP address
      * \param dstIP destination IP address
      * \param tcpHdr TCP header of the packet

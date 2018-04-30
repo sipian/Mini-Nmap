@@ -64,7 +64,7 @@ class Scan: public Packet {
      * \brief function called per thread to scan for ports
      * This adds the classfied ports in global vectors
      * \param srcIP IP of source host for port-scanning
-     * \param dstIP IP of destination host for port-scanning
+     * \param destinationIP IP of destination host for port-scanning
      * \param startPort start port-scanning from this port
      * \param endPort end port-scanning at this port
      * \param type what kind of scan is to be performed
@@ -112,14 +112,14 @@ class Scan: public Packet {
     void finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports);
 
     /*!
-     * check with a timeout if packet from targer port is received or not
+     * \brief check with a timeout if packet from targer port is received or not
      * \param dstPort port under scanning
      * \return link to TCP header
      */
     struct tcphdr* recvPacket(uint16_t dstPort);
 
     /*!
-     * Print port scan results
+     * \brief Print port scan results
     */
     void print(const std::string &dstIP, int duration);
 public:

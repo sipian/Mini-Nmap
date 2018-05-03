@@ -112,21 +112,14 @@ class Scan: public Packet {
     void finishTask(std::vector<uint16_t> &open_Ports, std::vector<uint16_t> &closed_Ports, std::vector<uint16_t> &unknown_Ports);
 
     /*!
-     * check with a timeout if packet from targer port is received or not
+     * \brief check with a timeout if packet from targer port is received or not
      * \param dstPort port under scanning
      * \return link to TCP header
      */
     struct tcphdr* recvPacket(uint16_t dstPort);
 
     /*!
-     * start pcap sniffer to
-     * \param targetIP IP under scanning
-     * \return link to TCP header
-     */
-    void sniff(const std::string &targetIP);
-
-    /*!
-     * Print port scan results
+     * \brief Print port scan results
     */
     void print(const std::string &dstIP, int duration);
 public:

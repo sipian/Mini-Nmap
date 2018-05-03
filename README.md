@@ -1,13 +1,13 @@
 ## **Mini-Nmap**
     
-###Objective and Motivation
+### Objective and Motivation
 -----
 
 [Nmap](https://nmap.org/) has been a very-effective tool for network discovery and security analysis for about 20 years now. The goal of the project was to implement certain network discovery techniques which are available in Nmap. A full implementation of Nmap would take quite a long time of development, hence in this project, we have decided to stick with certain techniques that are popularly used.
 
 The motivation of the project was to get an idea of how such network discovery tools are implemented, and to objectively see how hard implementing a suite like Nmap would actually be.
 
-###Project Specifications
+### Project Specifications
 -----
 
 The size of the project stands at around 2000 lines of code written in C++ and Python. The tools implemented as a part of the project are:
@@ -23,10 +23,10 @@ The size of the project stands at around 2000 lines of code written in C++ and P
 
 A full documentation of the code is available to be auto-generated for user convenience. This is discussed later.
 
-###Code Structure, Design Decisions and Tools used
+### Code Structure, Design Decisions and Tools used
 -----
 
-####Code Structure and Organization
+#### Code Structure and Organization
 -----
 
 The code is organized in the following manner:
@@ -47,7 +47,7 @@ The code is organized in the following manner:
 
 -   `arpPoison.py` is a Python module consists of code required for a Man-in-the-Middle Attack using ARP poisoning.
 
-####What happens in each of the files above?
+#### What happens in each of the files above?
 ----------------------------------------
 
 ##### `discover.h/.cpp`
@@ -67,7 +67,7 @@ The algorithm followed by the function is as follows:
 		+ If non-zero trials for the request left, add to the queue. Otherwise, don’t.
 + Return `active`
 
-#####`packet.h/.cpp`
+##### `packet.h/.cpp`
 
 This a utility file. This helps create socket descriptors, assemble packets at a header level (`TCP`, `IP`), and calculate checksums.
 
@@ -101,7 +101,7 @@ To revert the changes made, the “doctor” broadcasts messages as the gateway 
 
 This is a simple man-in-the-middle attack, which is why we decided to add it in this suite. The network library ScaPy was used for this module alone. The main file will execute the attack for a given duration, after which the attacked reprises the role of a “doctor” and reverts the changes
 
-####Design Decisions
+#### Design Decisions
 ----------------
 
 Certain design decisions were made as a part of the project. We chose C++ over Python, despite the huge module support from Python, since we believed that C++ was closer to the Linux Network API than Python, thus leaving room for less error. We have also made use of threads for parallel port scanning, and Python’s threading module is not as efficient as C++, which is also another reason to migrate to C++.
@@ -114,7 +114,7 @@ In the host discovery and port scanning techniques, we have decided to use a Rou
 
 We have also made use of raw sockets (specified using `SOCK_RAW`). This helps us modify the properties of the socket to our will (for example: sending spoofed packets), which is why we decided to use them over traditional stream or datagram sockets. Using raw sockets, we were able to populate the header appropriately as per requirements (for TCP, IP, and ICMP).
 
-####Tools used
+#### Tools used
 ----------
 
 We have made use of [`OpenStack`](https://www.openstack.org/). Using this, we have created a private subnet, which behaves as the test-bed for our tools.
